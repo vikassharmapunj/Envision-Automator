@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API Interaction Tool</title>
+    <style>
+        /* General Body and Container Styles */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            padding: 20px; /* Reduced padding */
+            background: #f4f7f6;
+            box-sizing: border-box;
+            margin: 0;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Section/Card Styles */
+        .section {
+            margin-bottom: 20px; /* Reduced spacing between sections */
+            padding: 18px; /* Reduced padding within sections */
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Form Element Styles */
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 12px; /* Reduced space above labels */
+            margin-bottom: 6px; /* Reduced spacing below labels */
+            color: #555;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 9px 11px; /* Reduced padding inside inputs */
+            margin-top: 0;
+            margin-bottom: 12px; /* Reduced spacing below inputs */
+            box-sizing: border-box;
+            border: 1px solid #dcdcdc;
+            border-radius: 5px;
+            font-size: 0.95rem; /* Slightly smaller font for compactness */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #00739d;
+            box-shadow: 0 0 0 3px rgba(0, 115, 157, 0.2);
+        }
+
+        /* Button Styles */
+        button {
+            margin-top: 12px;
+            padding: 10px 20px; /* Reduced padding for buttons */
+            background: #00739d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            margin-right: 10px; /* Reduced spacing between buttons */
+            font-size: 0.95rem; /* Slightly smaller font */
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #005a7d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* Specific Section Display States */
+        #apiManualFields {
+            display: none;
+        }
+
+        #autoExecutionFields {
+            display: none;
+        }
+
+        /* Response Box Styles (General) */
+        #responseBox {
+            background: #eef;
+            padding: 12px; /* Reduced padding */
+            white-space: pre-wrap;
+            font-family: 'Fira Code', 'Lucida Console', monospace;
+            margin-top: 12px; /* Reduced margin */
+            border-radius: 5px;
+            border: 1px solid #d0d0d0;
+            overflow-x: auto;
+            font-size: 0.9rem; /* Slightly smaller font */
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            align-items: center;
+            background-color: #292D3A;
+            color: white;
+            padding: 0.8rem 1.5rem; /* Reduced padding */
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px; /* Reduced space below header */
+        }
+
+        .header svg {
+            height: 35px; /* Slightly smaller logo */
+            width: auto;
+            margin-right: 1.2rem; /* Reduced space */
+        }
+
+        .header h1 {
+            font-size: 1.6rem; /* Slightly smaller title */
+            margin: 0;
+            flex-grow: 1;
+            white-space: normal;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: #343a40;
+            color: #ffffff;
+            padding: 1rem; /* Reduced padding */
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 0.85rem; /* Slightly smaller font */
+            border-top: 1px solid #e0e0e0;
+            margin-top: 25px; /* Reduced space above footer */
+            border-radius: 8px;
+        }
+
+        /* Token Status Messages */
+        .tokenStatus {
+            background: #e9ecef;
+            color: #6c757d;
+            padding: 10px; /* Reduced padding */
+            margin-top: 12px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            font-size: 0.9rem; /* Slightly smaller font */
+        }
+
+        .tokenStatus.acquired {
+            color: #155724;
+            background: #d4edda;
+            border-color: #c3e6cb;
+            font-weight: 600;
+        }
+
+        /* API Response Specific Styles */
+        .apiResponse {
+            background: #e6f7e9;
+            padding: 12px; /* Reduced padding */
+            border-radius: 5px;
+            margin-top: 12px;
+            border: 1px solid #b3e0c0;
+        }
+
+        .apiResponseCode {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 1rem; /* Slightly smaller font */
+        }
+
+        .apiResponseBody {
+            margin-top: 8px; /* Reduced margin */
+            font-family: 'Fira Code', 'Lucida Console', monospace;
+            background: #f8f9fa;
+            padding: 12px; /* Reduced padding */
+            white-space: pre-wrap;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+            overflow-x: auto;
+            font-size: 0.9rem; /* Slightly smaller font */
+        }
+
+        /* Custom API Selection */
+        #customApiSelection label {
+            font-weight: normal;
+        }
+
+        #customApiSelect {
+            height: 100px; /* Slightly reduced height */
+            resize: vertical;
+        }
+
+        /* Error and Warning Messages */
+        .error-highlight {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .error-response {
+            background-color: #fceceb;
+            border-color: #f5c6cb;
+            color: #721c24;
+            padding: 12px; /* Reduced padding */
+            border-radius: 5px;
+            margin-top: 12px;
+        }
+
+        /* Curl Command Display */
+        #apiCurlCommand {
+            resize: vertical;
+            min-height: 70px; /* Slightly reduced minimum height */
+        }
+
+        /* API Response Display Container */
+        #apiResponseDisplay {
+            margin-top: 12px;
+            padding: 18px; /* Reduced padding */
+            background: #fdfdfd;
+            border: 1px solid #eceff1;
+            border-radius: 8px;
+        }
+
+        #apiResponseDisplay h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.3rem; /* Slightly smaller font */
+            margin-bottom: 12px; /* Reduced margin */
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px; /* Reduced padding */
+        }
+
+        /* Mode Switch */
+        .mode-switch-container {
+            margin-bottom: 15px; /* Reduced margin */
+            padding: 12px; /* Reduced padding */
+            background: #eef5f7;
+            border-radius: 8px;
+            border: 1px solid #d0e7ed;
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Reduced gap */
+        }
+
+        .mode-switch-container label {
+            font-weight: normal;
+            margin: 0;
+            color: #333;
+            font-size: 0.95rem; /* Slightly smaller font */
+        }
+
+        .response-info {
+            margin-bottom: 8px; /* Reduced margin */
+            font-weight: 600;
+            color: #444;
+            font-size: 0.95rem;
+        }
+
+        #requestPayloadDisplay {
+            margin-top: 12px;
+            padding: 12px;
+            background: #e8f5fb;
+            border: 1px solid #b3d9f2;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Fira Code', 'Lucida Console', monospace;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        #requestPayloadDisplay.hidden {
+            display: none;
+        }
+
+        #corsWarning {
+            background-color: #fceceb;
+            border-color: #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        #apiExecutionSection {
+            display: none;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+            margin-left: 3px;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px; /* Adjusted position */
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 0.95rem; /* Slightly smaller font */
+            color: #888;
+            padding: 4px; /* Reduced padding */
+        }
+
+        .password-toggle:hover {
+            color: #333;
+        }
+
+        /* Basic Responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                text-align: center;
+                padding: 1rem;
+            }
+
+            .header svg {
+                margin-right: 0;
+                margin-bottom: 8px; /* Adjusted margin */
+            }
+
+            .header h1 {
+                font-size: 1.4rem; /* Adjusted font size */
+            }
+
+            button {
+                width: 100%;
+                margin-right: 0;
+                margin-bottom: 8px; /* Adjusted margin */
+            }
+
+            .mode-switch-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px; /* Adjusted gap */
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1833 736">
+            <path d="M0 0 C604.89 0 1209.78 0 1833 0 C1833 242.88 1833 485.76 1833 736 C1228.11 736 623.22 736 0 736 C0 493.12 0 250.24 0 0 Z " fill="#FEFEFE" transform="translate(0,0)"/>
+            <path d="M0 0 C50.86125 -0.0825 101.7225 -0.165 154.125 -0.25 C178.14821045 -0.30462402 178.14821045 -0.30462402 202.65673828 -0.36035156 C222.32592773 -0.37841797 222.32592773 -0.37841797 231.55563354 -0.3817749 C237.95437615 -0.3854774 244.35297611 -0.40003113 250.75167847 -0.42230225 C258.1585099 -0.4480434 265.56520646 -0.45927967 272.97208279 -0.4537798 C276.74856192 -0.45140421 280.52474103 -0.45475105 284.30116296 -0.47686052 C341.27250373 -0.79379885 395.87288911 11.87054848 438 52 C438.76957031 52.70511719 439.53914063 53.41023438 440.33203125 54.13671875 C469.66190968 81.88119835 484.50222036 124.95442541 486.14794922 164.56054688 C486.52192676 178.79774154 486.41275061 192.9401831 484 207 C483.88172852 207.74378906 483.76345703 208.48757813 483.64160156 209.25390625 C476.84045098 251.27221063 455.61543974 289.22856755 421.20654297 314.70019531 C414.14511201 319.76676785 406.72919704 324.04276034 399 328 C398.09048584 328.46913818 398.09048584 328.46913818 397.16259766 328.94775391 C381.89245929 336.71749866 365.64633529 342.07199816 348.90380859 345.58691406 C347.1528328 345.96683854 345.4134023 346.39897992 343.67578125 346.8359375 C325.10429501 351.36119712 305.54905542 351.29990348 286.5390625 351.22705078 C284.41732285 351.22648447 282.29558281 351.2268075 280.17384338 351.22793579 C274.49979003 351.22850172 268.82582396 351.21687279 263.15179062 351.20278788 C257.190147 351.19015159 251.22850065 351.18909998 245.2668457 351.18673706 C234.01597319 351.18055973 222.76514028 351.16420049 211.51428509 351.14403808 C196.28389041 351.11734565 181.05348465 351.10667611 165.82307243 351.09503365 C141.88201872 351.07631653 117.9410485 351.03644612 94 351 C94 390.6 94 430.2 94 471 C62.98 471 31.96 471 0 471 C0 315.57 0 160.14 0 0 Z " fill="#292D3A" transform="translate(706,132)"/>
+            <path d="M0 0 C31.02 0 62.04 0 94 0 C94 62.04 94 124.08 94 188 C194.98 188 295.96 188 400 188 C400 125.96 400 63.92 400 0 C431.02 0 462.04 0 494 0 C494 155.43 494 310.86 494 471 C462.98 471 431.96 471 400 471 C400 407.31 400 343.62 400 278 C299.02 278 198.04 278 94 278 C94 341.69 94 405.38 94 471 C62.98 471 31.96 471 0 471 C0 315.57 0 160.14 0 0 Z " fill="#292D3A" transform="translate(93,132)"/>
+            <path d="M0 0 C151.8 0 303.6 0 460 0 C460 29.37 460 58.74 460 89 C339.22 89 218.44 89 94 89 C94 127.61 94 166.22 94 206 C214.78 206 335.56 206 460 206 C460 235.37 460 264.74 460 295 C308.2 295 156.4 295 0 295 C0 197.65 0 100.3 0 0 Z " fill="#02A982" transform="translate(1282,306)"/>
+            <path d="M0 0 C50.86242918 -0.16121214 50.86242918 -0.16121214 72.3125 -0.1953125 C87.07460136 -0.2189703 101.83661084 -0.24665525 116.59863281 -0.30175781 C127.35371513 -0.34188411 138.10872231 -0.36749353 148.86387742 -0.37635398 C154.54783386 -0.38152546 160.23157554 -0.39350118 165.91546249 -0.42292023 C245.22374565 -0.8171037 245.22374565 -0.8171037 270.7265625 23.6953125 C271.85191406 24.83613281 271.85191406 24.83613281 273 26 C273.70898438 26.69867188 274.41796875 27.39734375 275.1484375 28.1171875 C292.49654149 46.26290547 294.58740974 70.74226008 294.1796875 94.57421875 C293.62285321 114.52057314 287.42709536 132.8235832 273.6015625 147.55078125 C264.84607255 155.79356233 255.16259644 160.78847094 244 165 C242.83404297 165.45826172 242.83404297 165.45826172 241.64453125 165.92578125 C223.04771353 172.72949505 202.95644661 172.15237301 183.45703125 172.11352539 C181.44484458 172.11324264 179.4326578 172.11340296 177.42047119 172.1139679 C172.00835891 172.11425245 166.59626922 172.10841135 161.18416214 172.10139394 C155.50941332 172.09510314 149.83466387 172.0945521 144.15991211 172.09336853 C133.43648512 172.09027199 122.71306843 172.08208141 111.98964596 172.07201904 C97.48316377 172.05870501 82.97667872 172.05334443 68.47019196 172.04751682 C45.64678693 172.03814024 22.82340365 172.01821016 0 172 C0 115.24 0 58.48 0 0 Z " fill="#FEFEFE" transform="translate(800,221)"/>
+            <path d="M0 0 C152.79 0 305.58 0 463 0 C463 29.37 463 58.74 463 89 C341.23 89 219.46 89 94 89 C94 103.52 94 118.04 94 133 C62.98 133 31.96 133 0 133 C0 89.11 0 45.22 0 0 Z " fill="#292D3A" transform="translate(1278,132)"/>
+        </svg>
+        <h1>Automation Initiative for Business User Acceptance Testing</h1>
+    </div>
+
+    <div id="auth-section"></div>
+    <div id="api-execution-section"></div>
+
+    <footer>&copy; <span id="copyrightYear">2025</span> Hewlett Packard Enterprise</footer>
+
+    <script>
+        // Set the copyright year dynamically
+        document.addEventListener('DOMContentLoaded', () => {
+            const copyrightYearElement = document.getElementById('copyrightYear');
+            if (copyrightYearElement) {
+                copyrightYearElement.textContent = new Date().getFullYear();
+            }
+        });
+
+        // Functions that interact with the main process (Electron/NW.js)
+        async function getAccessTokenFromBackend(tokenUrl, formData) {
+            if (window.electron && window.electron.ipcRenderer) {
+                return await window.electron.ipcRenderer.invoke('get-access-token', {
+                    tokenUrl,
+                    formData
+                });
+            } else if (nw && nw.Window) {
+                return await new Promise((resolve) => {
+                    nw.Window.get().emit('get-access-token', {
+                        tokenUrl,
+                        formData,
+                        callback: resolve
+                    });
+                });
+            } else {
+                throw new Error("Not in a desktop environment (Electron or NW.js not detected).");
+            }
+        }
+
+        async function storeTokenInBackend(token) {
+            if (window.electron && window.electron.ipcRenderer) {
+                await window.electron.ipcRenderer.invoke('store-token', token);
+            } else if (nw && nw.Window) {
+                nw.Window.get().emit('store-token', token);
+            }
+        }
+
+        async function clearTokenInBackend() {
+            if (window.electron && window.electron.ipcRenderer) {
+                await window.electron.ipcRenderer.invoke('clear-token');
+            } else if (nw && nw.Window) {
+                nw.Window.get().emit('clear-token');
+            }
+        }
+
+        async function executeApiRequestInBackend(options) {
+            if (window.electron && window.electron.ipcRenderer) {
+                return await window.electron.ipcRenderer.invoke('execute-api-request', options);
+            } else if (nw && nw.Window) {
+                return await new Promise((resolve) => {
+                    nw.Window.get().emit('execute-api-request', { ...options,
+                        callback: resolve
+                    });
+                });
+            } rags:
+                throw new Error("Not in a desktop environment (Electron or NW.js not detected).");
+            }
+        }
+
+        async function getStoredTokenFromBackend() {
+            if (window.electron && window.electron.ipcRenderer) {
+                return await window.electron.ipcRenderer.invoke('get-stored-token');
+            } else if (nw && nw.Window) {
+                return await new Promise((resolve) => {
+                    nw.Window.get().emit('get-stored-token', resolve);
+                });
+            } else {
+                return localStorage.getItem("access_token"); // Fallback for browser
+            }
+        }
+
+        // Global token variable
+        let accessToken = null;
+
+        // Initial check for stored token when the layout loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkStoredToken();
+        });
+
+        // Function to update token status and display sections
+        async function checkStoredToken() {
+            const storedToken = await getStoredTokenFromBackend();
+            const tokenStatus = document.getElementById("tokenStatus");
+            const apiExecutionSection = document.getElementById("apiExecutionSection");
+            const executionModeContainer = document.getElementById("executionModeContainer");
+
+            // Check if these elements exist before trying to access them, as they are in injected HTML
+            if (tokenStatus && apiExecutionSection && executionModeContainer) {
+                if (storedToken) {
+                    accessToken = storedToken;
+                    tokenStatus.textContent = "Token stored.";
+                    tokenStatus.classList.add("acquired");
+                    apiExecutionSection.style.display = 'block';
+                    executionModeContainer.style.display = 'block'; // Make the mode switch visible
+                    // Call toggleExecutionMode if it's defined and relevant to the initial state
+                    if (typeof toggleExecutionMode === 'function') {
+                        toggleExecutionMode();
+                    }
+                } else {
+                    accessToken = null;
+                    tokenStatus.textContent = "Token not acquired.";
+                    tokenStatus.classList.remove("acquired");
+                    apiExecutionSection.style.display = 'none';
+                    executionModeContainer.style.display = 'none';
+                }
+            } else {
+                // If elements are not yet available, wait for auth.html/api-execution.html DOMContentLoaded
+                // This scenario is handled by the scripts within auth.html and api-execution.html directly
+                // through their own DOMContentLoaded listeners and interactions with ipcRenderer.
+                // This 'checkStoredToken' in layout.html serves as an initial broad check.
+            }
+        }
+    </script>
+</body>
+
+</html>

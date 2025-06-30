@@ -1,0 +1,401 @@
+<div class="section">
+    <h2>OAuth2 Authentication</h2>
+
+    <div style="margin-bottom: 15px;">
+        <label for="authModeSelector">Authentication Mode:</label>
+        <select id="authModeSelector" onchange="toggleAuthMode()">
+            <option value="manual">Manual Input</option>
+            <option value="automatic">Automatic Input</option>
+        </select>
+    </div>
+
+    <div id="manualAuthFields" style="display: block;">
+        <label for="tokenUrl" class="required">Token URL</label>
+        <input type="text" id="tokenUrl" placeholder="https://auth.example.com/oauth2/token" required />
+
+        <label for="clientId" class="required">Client ID</label>
+        <div class="password-container">
+            <input type="password" id="clientId" placeholder="Client ID" required />
+            <span class="password-toggle" onclick="togglePasswordVisibility('clientId')">&#x1F441;</span>
+        </div>
+
+        <label for="clientSecret" class="required">Client Secret</label>
+        <div class="password-container">
+            <input type="password" id="clientSecret" placeholder="Client Secret" required />
+            <span class="password-toggle" onclick="togglePasswordVisibility('clientSecret')">&#x1F441;</span>
+        </div>
+        <button id="getManualAccessTokenBtn" onclick="getAccessToken()">Get Access Token</button>
+    </div>
+
+    <div id="automaticAuthFields" style="display: none;">
+        <div style="margin-bottom: 15px;">
+            <label for="environmentSelector">Select Environment for OAuth2 Authentication:</label>
+            <select id="environmentSelector">
+                <option value="uat">UAT</option>
+                <option value="prod">Production</option>
+            </select>
+        </div>
+        <!-- Password input removed as per your request -->
+        <button id="getAutoAccessTokenBtn" onclick="getAutomaticAccessToken()">Auto Get Access Token</button>
+    </div>
+
+    <div>
+        <button onclick="flushStoredToken()">Flush Stored Token</button>
+        <button id="reportIssueBtn" onclick="reportApiIssue()">Report API Issue via Email</button>
+    </div>
+
+    <div style="margin-top: 15px;">
+        <p>Token Status: <span id="tokenStatus">Token not acquired.</span></p>
+        <label for="accessTokenDisplay">Acquired Access Token:</label>
+        <textarea id="accessTokenDisplay" rows="3" readonly placeholder="Access token will appear here."></textarea>
+    </div>
+</div>
+
+<script>
+    let accessToken = null;
+    let lastApiError = null; // Variable to store the latest API error details
+    let currentEnvironment = 'uat'; // Default environment
+
+    // Helper to toggle password visibility
+    function togglePasswordVisibility(id) {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+            input.type = "text";
+        } else {
+            input.type = "password";
+        }
+    }
+
+    // Function to toggle between manual and automatic authentication modes
+    function toggleAuthMode() {
+        const selector = document.getElementById('authModeSelector');
+        const manualFields = document.getElementById('manualAuthFields');
+        const automaticFields = document.getElementById('automaticAuthFields');
+
+        if (selector.value === 'manual') {
+            manualFields.style.display = 'block';
+            automaticFields.style.display = 'none';
+        } else {
+            manualFields.style.display = 'none';
+            automaticFields.style.display = 'block';
+        }
+    }
+
+    async function getAccessToken() { // For Manual Mode
+        const tokenUrl = document.getElementById('tokenUrl').value;
+        const clientId = document.getElementById('clientId').value;
+        const clientSecret = document.getElementById('clientSecret').value;
+        const tokenStatus = document.getElementById('tokenStatus');
+        const accessTokenDisplay = document.getElementById('accessTokenDisplay');
+
+        if (!tokenUrl || !clientId || !clientSecret) {
+            alert('Please fill in all required fields for Manual Authentication.');
+            return;
+        }
+
+        tokenStatus.textContent = 'Acquiring token...';
+        tokenStatus.classList.remove('acquired', 'error');
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('grant_type', 'client_credentials');
+            formData.append('client_id', clientId);
+            formData.append('client_secret', clientSecret);
+            formData.append('scope', 'read'); // Hardcoded scope as per requirement
+
+            const response = await window.electron.ipcRenderer.invoke('get-access-token', {
+                tokenUrl: tokenUrl,
+                formData: formData.toString()
+            });
+
+            if (response.status >= 200 && response.status < 300) {
+                const data = JSON.parse(response.data);
+                accessToken = data.access_token;
+                if (accessToken) {
+                    await storeTokenInBackend(accessToken); // Store token via IPC
+                    tokenStatus.textContent = 'Token acquired and stored.';
+                    tokenStatus.classList.add('acquired');
+                    accessTokenDisplay.value = accessToken;
+                    alert('Access token acquired and stored successfully!');
+                    // Also enable the API execution section if it's currently hidden
+                    const apiExecutionSection = document.getElementById("apiExecutionSection"); // Assuming you have this ID in layout.html or api-execution.html
+                    if (apiExecutionSection) {
+                        apiExecutionSection.style.display = 'block';
+                    }
+                } else {
+                    throw new Error('Access token not found in response.');
+                }
+            } else {
+                let errorMessage = `Failed to get token. Status: ${response.status}`;
+                try {
+                    const errorData = JSON.parse(response.data);
+                    if (errorData.error_description) {
+                        errorMessage += `: ${errorData.error_description}`;
+                    } else if (errorData.error) {
+                        errorMessage += `: ${errorData.error}`;
+                    }
+                } catch (e) {
+                    errorMessage += `: ${response.data}`; // Raw response if not JSON
+                }
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            tokenStatus.textContent = `Error: ${error.message}`;
+            tokenStatus.classList.add('error');
+            accessTokenDisplay.value = '';
+            lastApiError = {
+                url: tokenUrl,
+                method: 'POST',
+                parameters: 'grant_type=client_credentials&client_id=...&client_secret=...&scope=read', // Mask sensitive data
+                responseStatus: error.status || 'N/A',
+                responseError: error.message,
+                environment: currentEnvironment // Add current environment
+            };
+            alert(`Error acquiring token: ${error.message}`);
+        }
+    }
+
+    async function getAutomaticAccessToken() { // For Automatic Mode
+        const tokenStatus = document.getElementById('tokenStatus');
+        const accessTokenDisplay = document.getElementById('accessTokenDisplay');
+        const environmentSelector = document.getElementById('environmentSelector');
+
+        currentEnvironment = environmentSelector.value;
+
+        tokenStatus.textContent = `Acquiring token automatically for ${currentEnvironment.toUpperCase()}...`;
+        tokenStatus.classList.remove('acquired', 'error');
+
+        try {
+            // IPC call to main process to read credentials from file
+            // Note: Password is no longer sent from here, `main.js` must handle decryption differently or read plaintext
+            const credentials = await window.electron.ipcRenderer.invoke('read-credentials-file', {
+                environment: currentEnvironment
+                // password: configPassword // Removed as per request
+            });
+
+            if (!credentials || !credentials.tokenUrl || !credentials.clientId || !credentials.clientSecret) {
+                throw new Error('Automatic credentials not found or incomplete. Please check the credentials file.');
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('grant_type', 'client_credentials');
+            formData.append('client_id', credentials.clientId);
+            formData.append('client_secret', credentials.clientSecret);
+            formData.append('scope', 'read'); // Hardcoded scope
+
+            const response = await window.electron.ipcRenderer.invoke('get-access-token', {
+                tokenUrl: credentials.tokenUrl,
+                formData: formData.toString()
+            });
+
+            if (response.status >= 200 && response.status < 300) {
+                const data = JSON.parse(response.data);
+                accessToken = data.access_token;
+                if (accessToken) {
+                    await storeTokenInBackend(accessToken); // Store token via IPC
+                    tokenStatus.textContent = `Token acquired automatically for ${currentEnvironment.toUpperCase()} and stored.`;
+                    tokenStatus.classList.add('acquired');
+                    accessTokenDisplay.value = accessToken;
+                    alert(`Access token acquired automatically for ${currentEnvironment.toUpperCase()} and stored successfully!`);
+                    const apiExecutionSection = document.getElementById("apiExecutionSection");
+                    if (apiExecutionSection) {
+                        apiExecutionSection.style.display = 'block';
+                    }
+                    // Notify main process about the selected environment
+                    window.electron.ipcRenderer.invoke('set-environment', currentEnvironment);
+
+                } else {
+                    throw new Error('Access token not found in response.');
+                }
+            } else {
+                let errorMessage = `Failed to get token automatically. Status: ${response.status}`;
+                try {
+                    const errorData = JSON.parse(response.data);
+                    if (errorData.error_description) {
+                        errorMessage += `: ${errorData.error_description}`;
+                    } else if (errorData.error) {
+                        errorMessage += `: ${errorData.error}`;
+                    }
+                } catch (e) {
+                    errorMessage += `: ${response.data}`;
+                }
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            tokenStatus.textContent = `Error: ${error.message}`;
+            tokenStatus.classList.add('error');
+            accessTokenDisplay.value = '';
+            lastApiError = {
+                url: 'N/A (Automatic Mode)',
+                method: 'POST',
+                parameters: 'grant_type=client_credentials&client_id=...&client_secret=...&scope=read', // Mask sensitive data
+                responseStatus: error.status || 'N/A',
+                responseError: error.message,
+                environment: currentEnvironment // Add current environment
+            };
+            alert(`Error acquiring token automatically: ${error.message}`);
+        }
+    }
+
+    async function flushStoredToken() {
+        const tokenStatus = document.getElementById('tokenStatus');
+        const accessTokenDisplay = document.getElementById('accessTokenDisplay');
+
+        await window.electron.ipcRenderer.invoke('clear-token');
+        accessToken = null;
+        tokenStatus.textContent = 'Token not acquired.';
+        tokenStatus.classList.remove('acquired');
+        tokenStatus.classList.remove('error'); // Clear error state
+        accessTokenDisplay.value = '';
+
+        // Hide API execution section as token is flushed
+        const apiExecutionSection = document.getElementById("apiExecutionSection");
+        if (apiExecutionSection) {
+            apiExecutionSection.style.display = 'none';
+        }
+        alert('Stored access token has been removed.');
+    }
+
+    async function storeTokenInBackend(token) {
+        await window.electron.ipcRenderer.invoke('store-token', token);
+    }
+
+    async function checkStoredToken() {
+        const storedToken = await window.electron.ipcRenderer.invoke('get-stored-token');
+        const tokenStatus = document.getElementById('tokenStatus');
+        const accessTokenDisplay = document.getElementById('accessTokenDisplay');
+        const apiExecutionSection = document.getElementById("apiExecutionSection");
+        // Get the last stored environment (if any)
+        const storedEnvironment = await window.electron.ipcRenderer.invoke('get-environment');
+        if (storedEnvironment) {
+            currentEnvironment = storedEnvironment;
+            document.getElementById('environmentSelector').value = storedEnvironment;
+        }
+
+        if (storedToken) {
+            accessToken = storedToken;
+            tokenStatus.textContent = `Token previously acquired for ${currentEnvironment.toUpperCase()}.`;
+            tokenStatus.classList.add('acquired');
+            accessTokenDisplay.value = storedToken;
+            if (apiExecutionSection) {
+                apiExecutionSection.style.display = 'block';
+            }
+        } else {
+            tokenStatus.textContent = 'Token not acquired.';
+            tokenStatus.classList.remove('acquired');
+            if (apiExecutionSection) {
+                apiExecutionSection.style.display = 'none';
+            }
+        }
+
+        // Initialize mode display
+        toggleAuthMode();
+    }
+
+    // Report API Issue via Email
+    async function reportApiIssue() {
+        if (!lastApiError) {
+            alert("No API error has occurred recently to report.");
+            return;
+        }
+
+        const subject = encodeURIComponent("API Issue Report");
+        let body = `Details of the last API error:\n\n`;
+        body += `API URL: ${lastApiError.url}\n`;
+        body += `Method: ${lastApiError.method}\n`;
+        body += `Parameters: ${lastApiError.parameters}\n`; // Masked sensitive data
+        body += `Response Status: ${lastApiError.responseStatus}\n`;
+        body += `Error Details: ${lastApiError.responseError}\n`;
+        body += `Environment: ${lastApiError.environment || 'N/A'}\n\n`; // Include environment
+        body += `Please provide any additional context here.`;
+
+        const mailtoLink = `mailto:your_support_email@example.com?subject=${subject}&body=${encodeURIComponent(body)}`;
+
+        // Open mailto link via main process to ensure it works consistently
+        try {
+            await window.electron.ipcRenderer.invoke('open-external-link', mailtoLink);
+            alert("Email draft opened. Please review and send.");
+        } catch (error) {
+            console.error("Failed to open email client:", error);
+            alert("Failed to open email client. Please copy the error details manually:\n\n" + decodeURIComponent(body));
+        }
+    }
+
+    // Call checkStoredToken when auth.html content is loaded
+    document.addEventListener('DOMContentLoaded', checkStoredToken);
+
+    // Make accessToken globally accessible to other parts of the application (e.g., api-execution.html)
+    // You might also consider passing it explicitly to functions in api-execution.js
+    window.getAccessTokenValue = () => accessToken;
+    window.getCurrentEnvironment = () => currentEnvironment; // Provide access to current environment
+
+    // Listener for `execute-api-request` to capture errors for reporting
+    // This assumes api-execution.js will use ipcRenderer.invoke('execute-api-request')
+    // and call window.setLastApiError when an error occurs.
+    window.setLastApiError = (errorDetails) => {
+        lastApiError = errorDetails;
+        lastApiError.environment = currentEnvironment; // Ensure environment is captured
+        console.log("Last API error captured in auth.html:", lastApiError);
+    };
+</script>
+
+<style>
+    /* Add specific styles for the new UI elements */
+    #authModeSelector {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    #environmentSelector {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Basic styling for token status */
+    #tokenStatus {
+        font-weight: bold;
+        color: #666;
+    }
+    #tokenStatus.acquired {
+        color: green;
+    }
+    #tokenStatus.error {
+        color: red;
+    }
+
+    #accessTokenDisplay {
+        font-family: monospace;
+        background-color: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap; /* Preserve formatting for tokens */
+        word-wrap: break-word; /* Break long tokens */
+    }
+
+    /* Styles for password visibility toggle */
+    .password-container {
+        position: relative;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    .password-container input[type="password"],
+    .password-container input[type="text"] {
+        padding-right: 35px; /* Make space for the eye icon */
+        width: calc(100% - 6px); /* Adjust to ensure proper width */
+    }
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #555;
+    }
+</style>

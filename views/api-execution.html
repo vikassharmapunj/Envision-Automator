@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Execution Setup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: calc(100% - 22px);
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        select[multiple] {
+            height: 120px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            margin-right: 10px; /* Added for button spacing */
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .required::after {
+            content: ' *';
+            color: red;
+        }
+
+        h2, h3 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .response-info {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error-response {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .mode-switch-container {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .cors-warning {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .api-entry-item { /* Renamed from .api-entry to avoid confusion with an existing class */
+            background-color: #f9f9f9;
+            border: 1px solid #e1e1e1;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .api-entry-item label {
+            font-weight: normal;
+            margin-top: 10px;
+        }
+
+        .api-entry-item textarea, .api-entry-item input[type="number"] {
+            width: calc(100% - 10px);
+            margin-bottom: 5px;
+        }
+
+        .api-entry-item button {
+            background-color: #dc3545;
+            margin-top: 5px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .api-entry-item button:hover {
+            background-color: #c82333;
+        }
+
+        .bulk-api-response-item {
+            border-bottom: 1px dashed #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .bulk-api-response-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .bulk-api-response-item h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .bulk-api-response-item pre {
+            background-color: #eef;
+            border: 1px solid #dde;
+        }
+
+        .bulk-api-response-item .status-success {
+            color: green;
+        }
+
+        .bulk-api-response-item .status-error {
+            color: red;
+        }
+
+        /* Styles for professional load test results display */
+        .load-test-summary, .security-test-summary {
+            background-color: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .load-test-summary table, .security-test-summary table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .load-test-summary th,
+        .load-test-summary td,
+        .security-test-summary th,
+        .security-test-summary td {
+            border: 1px solid #d0d0d0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .load-test-summary th,
+        .security-test-summary th {
+            background-color: #e9e9e9;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .load-test-summary td,
+        .security-test-summary td {
+            background-color: #ffffff;
+            color: #555;
+        }
+
+        .load-test-summary .metric-label,
+        .security-test-summary .metric-label {
+            font-weight: 600;
+            color: #007bff;
+        }
+
+        .load-test-summary .metric-value,
+        .security-test-summary .metric-value {
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #333;
+        }
+
+        .load-test-errors, .security-test-errors {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #fceceb;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            color: #721c24;
+        }
+
+        .load-test-errors ul, .security-test-errors ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .load-test-errors li, .security-test-errors li {
+            margin-bottom: 5px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .security-vulnerability-detail {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .security-vulnerability-detail h4 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.1em;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .security-vulnerability-detail p {
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .security-vulnerability-detail strong {
+            color: #007bff;
+        }
+
+        .security-vulnerability-detail pre {
+            background-color: #eef;
+            border: 1px solid #dde;
+            margin-top: 5px;
+            padding: 8px;
+            border-radius: 3px;
+            overflow-x: auto; /* Allow horizontal scrolling for long POCs */
+        }
+
+        .security-status-ok {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .security-status-vulnerable {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="apiExecutionSection" class="section">
+        <h2>API Execution Setup</h2>
+
+        <div class="mode-switch-container" id="executionModeContainer">
+            <label for="executionMode">Select Execution Mode:</label>
+            <select id="executionMode" onchange="toggleExecutionMode()">
+                <option value="manual" selected>Manual Execution</option>
+                <option value="automatic">Multiple API Execution</option>
+                <option value="api_security">API Security Testing</option>
+                <option value="static_security">Static Page Security Testing</option>
+                <option value="load">API Load Testing</option>
+            </select>
+        </div>
+
+        <div id="apiManualFields">
+            <label for="environment" class="required">Select Environment</label>
+            <select id="environment" onchange="onEnvChange()" required>
+                <option value="">-- Select --</option>
+                <option value="uat">UAT</option>
+                <option value="prod">Production</option>
+            </select>
+
+            <label for="apiSelect" class="required">Select API</label>
+            <select id="apiSelect" onchange="updateApiDetails()" required></select>
+
+            <label for="apiUrl" class="required">API URL</label>
+            <input type="text" id="apiUrl" placeholder="API URL" required />
+
+            <label for="apiMethod" class="required">HTTP Method</label>
+            <select id="apiMethod" onchange="togglePayloadDisplay()" required>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+            </select>
+
+            <label for="payloadManual">API Payload</label>
+            <textarea id="payloadManual" rows="5" placeholder='{"key": "value"}'></textarea>
+            <div id="requestPayloadDisplay" class="hidden">
+                <p class="response-info">Request Payload (<span id="requestPayloadMethod"></span>):</p>
+                <pre id="requestPayloadContent"></pre>
+            </div>
+
+            <button onclick="executeApi()">Execute API</button>
+
+            <h3>API Response</h3>
+            <div id="apiResponseDisplay">
+                <p class="response-info">Status Code: <span id="responseCode"></span></p>
+                <p class="response-info">Response Time: <span id="responseTime"></span> ms</p>
+                <pre id="responseBody"></pre>
+                <div id="errorMessage" class="error-response" style="display:none;">
+                    <p class="response-info">Error Details:</p>
+                    <p class="response-info">Status Code: <span id="errorCode"></span></p>
+                    <p class="response-info">Response Time: <span id="errorTime"></span> ms</p>
+                    <pre id="errorPayload"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div id="autoExecutionFields" style="display:none;">
+            <h2>Automatic API Execution</h2>
+            <label for="autoEnvSelect" class="required">Select Environment for Automation</label>
+            <select id="autoEnvSelect" onchange="onAutoEnvChangeBulk()" required>
+                <option value="">-- Select --</option>
+                <option value="uat">UAT</option>
+                <option value="prod">Production</option>
+            </select>
+
+            <label for="customApiSelect" class="required">Select APIs to Add to Bulk List (Ctrl+Click to select multiple)</label>
+            <select id="customApiSelect" multiple size="5" required></select>
+            <button onclick="addSelectedApisToBulkList()">Add Selected APIs to Bulk List</button>
+
+
+            <h3>APIs for Bulk Execution (with individual payloads)</h3>
+            <div id="selectedApisDisplayContainer">
+                <p id="noApiSelectedMessage">No APIs added for bulk execution yet. Select from above and click 'Add'.</p>
+            </div>
+            <button onclick="executeBulkApis()">Execute Bulk APIs</button>
+
+            <h3>Bulk API Responses</h3>
+            <div id="bulkApiResponseDisplay">
+                <div id="bulkResponseBody"></div>
+                <p id="noBulkResponseYet" style="text-align: center; color: #666;">Responses will appear here after execution.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="apiSecurityTestingSection" class="section" style="display:none;">
+        <h2>API Security Testing</h2>
+        <label for="securityEnvSelect" class="required">Select Environment</label>
+        <select id="securityEnvSelect" onchange="onSecurityEnvChange()" required>
+            <option value="">-- Select --</option>
+            <option value="uat">UAT</option>
+            <option value="prod">Production</option>
+        </select>
+
+        <label for="securityApiSelect" class="required">Select API</label>
+        <select id="securityApiSelect" onchange="updateSecurityApiDetails()" required></select>
+
+        <label for="securityTestType">Select Security Test Type:</label>
+        <select id="securityTestType">
+            <option value="xss">Cross-Site Scripting (XSS)</option>
+            <option value="sql_injection">SQL Injection</option>
+            <option value="broken_auth">Broken Authentication (Placeholder)</option>
+            <option value="insecure_direct_object_ref">Insecure Direct Object Reference (IDOR) (Placeholder)</option>
+        </select>
+        <label for="securityTestUrl">API URL for Security Test:</label>
+        <input type="text" id="securityTestUrl" placeholder="Enter API URL for security testing" />
+        <label for="securityTestPayload">Payload (if applicable):</label>
+        <textarea id="securityTestPayload" rows="3" placeholder='{"key": "<script>alert(\"XSS\")</script>"}'></textarea>
+        <button onclick="runSecurityTest()">Run Security Test</button>
+        <h3>Security Test Results</h3>
+        <div id="apiSecurityTestResultsContainer" class="security-test-summary" style="display:none;">
+            <h3>Security Test Summary for <span id="apiSecurityTestSummaryApi"></span></h3>
+            <table>
+                <tr>
+                    <td class="metric-label">Test Type:</td>
+                    <td class="metric-value" id="apiSecurityTestSummaryType"></td>
+                </tr>
+                <tr>
+                    <td class="metric-label">Target URL:</td>
+                    <td class="metric-value" id="apiSecurityTestSummaryUrl"></td>
+                </tr>
+                <tr>
+                    <td class="metric-label">Overall Status:</td>
+                    <td class="metric-value" id="apiSecurityOverallStatus"></td>
+                </tr>
+            </table>
+
+            <div id="apiSecurityVulnerabilityDetails">
+                </div>
+
+            <div id="apiSecurityNoVulnerabilities" class="security-status-ok" style="display:none;">
+                No vulnerabilities found for this API test.
+            </div>
+        </div>
+        <pre id="apiSecurityTestRawResults" style="display:none;"></pre> <button id="downloadApiSecurityReportBtn" style="display:none;" onclick="generateAndDownloadApiSecurityPdf()">Download API Security Report as PDF</button>
+        <div id="apiSecurityPdfReportStatus"></div>
+    </div>
+
+    <div id="staticPageSecurityTestingSection" class="section" style="display:none;">
+        <h2>Static Page Security Testing</h2>
+        <label for="staticPageUrl" class="required">Static Page URL:</label>
+        <input type="text" id="staticPageUrl" placeholder="Enter URL of static HTML page (e.g., https://example.com/index.html)" required />
+        <button onclick="runStaticPageSecurityTest()">Run Static Page Security Test</button>
+        <h3>Static Page Security Test Results</h3>
+        <div id="staticPageSecurityTestResultsContainer" class="security-test-summary" style="display:none;">
+            <h3>Security Test Summary for <span id="staticPageSecurityTestSummaryUrlDisplay"></span></h3>
+            <table>
+                <tr>
+                    <td class="metric-label">Target URL:</td>
+                    <td class="metric-value" id="staticPageTestSummaryUrl"></td>
+                </tr>
+                <tr>
+                    <td class="metric-label">Overall Status:</td>
+                    <td class="metric-value" id="staticPageOverallStatus"></td>
+                </tr>
+            </table>
+
+            <div id="staticPageVulnerabilityDetails">
+                </div>
+
+            <div id="staticPageNoVulnerabilities" class="security-status-ok" style="display:none;">
+                No vulnerabilities found for this static page test.
+            </div>
+        </div>
+        <pre id="staticPageSecurityRawResults" style="display:none;"></pre> <button id="downloadStaticSecurityReportBtn" style="display:none;" onclick="generateAndDownloadStaticSecurityPdf()">Download Static Security Report as PDF</button>
+        <div id="staticSecurityPdfReportStatus"></div>
+    </div>
+
+    <div id="apiLoadTestingSection" class="section" style="display:none;">
+        <h2>API Load Testing</h2>
+        <label for="loadTestEnvSelect" class="required">Select Environment</label>
+        <select id="loadTestEnvSelect" onchange="onLoadTestEnvChange()" required>
+            <option value="">-- Select --</option>
+            <option value="uat">UAT</option>
+            <option value="prod">Production</option>
+        </select>
+
+        <label for="loadTestApiSelect" class="required">Select APIs to Add to Load Test (Ctrl+Click to select multiple)</label>
+        <select id="loadTestApiSelect" multiple size="5" required></select>
+        <button onclick="addSelectedApisToLoadTestList()">Add Selected APIs to Load Test</button>
+
+        <h3>APIs for Load Test (with individual payloads)</h3>
+        <div id="selectedLoadApisDisplayContainer">
+            <p id="noLoadApiSelectedMessage">No APIs added for load testing yet. Select from above and click 'Add'.</p>
+        </div>
+
+        <label for="loadTestRequests">Number of Requests (per API):</label>
+        <input type="number" id="loadTestRequests" value="100" min="1" />
+        <label for="loadTestConcurrency">Concurrency (Simultaneous Requests per API):</label>
+        <input type="number" id="loadTestConcurrency" value="10" min="1" />
+        
+        <button onclick="runLoadTest()">Run Load Test</button>
+        
+        <h3>Load Test Results</h3>
+        <div id="loadTestResults">No load tests run yet.</div>
+        <button id="downloadLoadReportBtn" style="display:none;" onclick="generateAndDownloadLoadPdf()">Download Load Report as PDF</button>
+        <div id="loadPdfReportStatus"></div>
+    </div>
+
+    <div id="corsWarning" class="cors-warning">
+        <p>
+            <strong>Important:</strong> It appears your API request failed due to a Cross-Origin Resource Sharing (CORS) issue. This is a browser security restriction. To resolve this, the <strong>API server</strong> needs to be configured to allow requests from the origin where this tool is being served. Please contact the API team and provide them with the origin of this page.
+        </p>
+        <p>
+            If you are seeing this consistently, Postman might work because it does not enforce these browser security restrictions.
+        </p>
+    </div>
+
+    <script>
+        const environment = document.getElementById("environment"); // Manual mode env
+        const apiManualFields = document.getElementById("apiManualFields");
+        const autoExecutionFields = document.getElementById("autoExecutionFields");
+        const apiSelect = document.getElementById("apiSelect"); // Manual mode API
+        const apiUrlInput = document.getElementById("apiUrl"); // Manual mode URL
+        const apiMethodSelect = document.getElementById("apiMethod"); // Manual mode method
+        const payloadInputManual = document.getElementById("payloadManual"); // Manual mode payload
+        const apiResponseDisplay = document.getElementById("apiResponseDisplay");
+        const responseCodeDisplay = document.getElementById("responseCode");
+        const responseTimeDisplay = document.getElementById("responseTime");
+        const responseBody = document.getElementById("responseBody");
+        const errorMessageDiv = document.getElementById("errorMessage");
+        const errorCodeDisplay = document.getElementById("errorCode");
+        const errorTimeDisplay = document.getElementById("errorTime");
+        const errorPayloadDisplay = document.getElementById("errorPayload");
+        const autoEnvSelect = document.getElementById("autoEnvSelect"); // Automatic mode env
+        const customApiSelect = document.getElementById("customApiSelect"); /* Automatic mode API multi-selection */
+        const selectedApisDisplayContainer = document.getElementById("selectedApisDisplayContainer"); /* Automatic mode bulk list */
+        const noApiSelectedMessage = document.getElementById("noApiSelectedMessage");
+        const bulkApiResponseDisplay = document.getElementById("bulkResponseBody");
+        const noBulkResponseYet = document.getElementById("noBulkResponseYet");
+        const corsWarningDiv = document.getElementById("corsWarning");
+        const executionModeSelect = document.getElementById("executionMode");
+        const requestPayloadDisplayDiv = document.getElementById("requestPayloadDisplay");
+        const requestPayloadContentPre = document.getElementById("requestPayloadContent");
+        const requestPayloadMethodSpan = document.getElementById("requestPayloadMethod");
+
+        // API Security Testing Elements
+        const apiSecurityTestingSection = document.getElementById("apiSecurityTestingSection");
+        const securityEnvSelect = document.getElementById("securityEnvSelect");
+        const securityApiSelect = document.getElementById("securityApiSelect");
+        const securityTestTypeSelect = document.getElementById("securityTestType");
+        const securityTestUrlInput = document.getElementById("securityTestUrl");
+        const securityTestPayloadInput = document.getElementById("securityTestPayload");
+        const apiSecurityTestResultsContainer = document.getElementById("apiSecurityTestResultsContainer"); // New professional display container
+        const apiSecurityTestSummaryApi = document.getElementById("apiSecurityTestSummaryApi");
+        const apiSecurityTestSummaryType = document.getElementById("apiSecurityTestSummaryType");
+        const apiSecurityTestSummaryUrl = document.getElementById("apiSecurityTestSummaryUrl");
+        const apiSecurityOverallStatus = document.getElementById("apiSecurityOverallStatus");
+        const apiSecurityVulnerabilityDetails = document.getElementById("apiSecurityVulnerabilityDetails");
+        const apiSecurityNoVulnerabilities = document.getElementById("apiSecurityNoVulnerabilities");
+        const apiSecurityTestRawResults = document.getElementById("apiSecurityTestRawResults"); // Raw results (for debugging)
+        const downloadApiSecurityReportBtn = document.getElementById("downloadApiSecurityReportBtn"); // Renamed for clarity
+        const apiSecurityPdfReportStatusDiv = document.getElementById("apiSecurityPdfReportStatus"); // Renamed for clarity
+
+        // Static Page Security Testing Elements (NEW)
+        const staticPageSecurityTestingSection = document.getElementById("staticPageSecurityTestingSection");
+        const staticPageUrlInput = document.getElementById("staticPageUrl");
+        const staticPageSecurityTestResultsContainer = document.getElementById("staticPageSecurityTestResultsContainer");
+        const staticPageSecurityTestSummaryUrlDisplay = document.getElementById("staticPageSecurityTestSummaryUrlDisplay");
+        const staticPageTestSummaryUrl = document.getElementById("staticPageTestSummaryUrl");
+        const staticPageOverallStatus = document.getElementById("staticPageOverallStatus");
+        const staticPageVulnerabilityDetails = document.getElementById("staticPageVulnerabilityDetails");
+        const staticPageNoVulnerabilities = document.getElementById("staticPageNoVulnerabilities");
+        const staticPageSecurityRawResults = document.getElementById("staticPageSecurityRawResults");
+        const downloadStaticSecurityReportBtn = document.getElementById("downloadStaticSecurityReportBtn");
+        const staticSecurityPdfReportStatusDiv = document.getElementById("staticSecurityPdfReportStatus");
+
+        // Load Testing Elements
+        const apiLoadTestingSection = document.getElementById("apiLoadTestingSection");
+        const loadTestEnvSelect = document.getElementById("loadTestEnvSelect");
+        const loadTestApiSelect = document.getElementById("loadTestApiSelect"); // Changed to multi-select
+        // Removed loadTestUrlInput and loadTestPayloadInput as they will be per-API
+        const loadTestRequestsInput = document.getElementById("loadTestRequests");
+        const loadTestConcurrencyInput = document.getElementById("loadTestConcurrency");
+        // NEW: Load Testing specific elements
+        const selectedLoadApisDisplayContainer = document.getElementById("selectedLoadApisDisplayContainer");
+        const noLoadApiSelectedMessage = document.getElementById("noLoadApiSelectedMessage");
+        
+        const loadTestResultsDiv = document.getElementById("loadTestResults");
+        const downloadLoadReportBtn = document.getElementById("downloadLoadReportBtn");
+        const loadPdfReportStatusDiv = document.getElementById("loadPdfReportStatus");
+
+
+        // Global array to store APIs selected for bulk execution with their specific parameters
+        let selectedBulkApisData = [];
+        // NEW: Global array to store APIs selected for load execution with their specific parameters
+        let selectedLoadTestApisData = [];
+
+
+        // API_MAP is now defined directly in api-execution.html
+        const API_MAP = {
+            uat: [{
+                id: "uat_api_1",
+                name: "UAT API 1 - GET APIM- QuoteDetails/QuoteDetails",
+                url: "https://apim-itg.it.hpe.com/api/dqm/quote/v1/quotes/procurement?quote-no=",
+                method: "GET",
+                restrictedParams: ["quote-no"]
+            }, {
+                id: "uat_api_2",
+                name: "UAT API 2 - POST APIM-ServiceQuote and Contract NonProd/Renewal Quote Req",
+                url: "https://apim-itg.it.hpe.com/api/services/quotes/v1/renewal-quote",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_3",
+                name: "UAT API 3 - POST ASN-Pull API/Advance Shipment Notice",
+                url: "https://apim-itg.it.hpe.com/api/order-management/shipment/v1/deliveryStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_4",
+                name: "UAT API 4 - POST Billing-Pull API/Billing",
+                url: "https://apim-itg.it.hpe.com/api/order-management/billing/v1/billingStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_5",
+                name: "UAT API 5 - POST Flex-Solution Billing Hybrid API/Flex-Solution Billing API",
+                url: "https://apim-itg.it.hpe.com/api/services/billing/v1/flex-billing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_6",
+                name: "UAT API 6 - POST OrderStatus-Pull API/Orderstatus",
+                url: "https://apim-itg.it.hpe.com/api/order-management/order/v1/orderStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_7",
+                name: "UAT API 7 - POST Special Pricing Pull API/APIM ITG",
+                url: "https://apim-itg.it.hpe.com/api/price-communications/v1/special-pricing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_8",
+                name: "UAT API 8 - POST Standard Pricing Pull & Special Pricing Delta Pull API/Standard Pricing Pull",
+                url: "https://apim-itg.it.hpe.com/api/price-communications/pricing/v1/standard-pricing",
+                method: "POST",
+                restrictedParams: []
+            }],
+            prod: [{
+                id: "prod_api_1",
+                name: "PROD API 1 - GET APIM- QuoteDetails/QuoteDetails",
+                url: "https://apim.it.hpe.com/api/dqm/quote/v1/quotes/procurement?quote-no=",
+                method: "GET",
+                restrictedParams: ["quote-no"]
+            }, {
+                id: "prod_api_2",
+                name: "PROD API 2 - POST APIM-ServiceQuote and Contract NonProd/Renewal Quote Req",
+                url: "https://apim.it.hpe.com/api/services/quotes/v1/renewal-quote",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_3",
+                name: "PROD API 3 - POST ASN-Pull API/Advance Shipment Notice",
+                url: "https://apim.it.hpe.com/api/order-management/shipment/v1/deliveryStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_4",
+                name: "PROD API 4 - POST Billing-Pull API/Billing",
+                url: "https://apim.it.hpe.com/api/order-management/billing/v1/billingStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_5",
+                name: "PROD API 5 - POST Flex-Solution Billing Hybrid API/Flex-Solution Billing API",
+                url: "https://apim.it.hpe.com/api/services/billing/v1/flex-billing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_6",
+                name: "PROD API 6 - POST OrderStatus-Pull API/Orderstatus",
+                url: "https://apim.it.hpe.com/api/order-management/order/v1/orderStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_7",
+                name: "PROD API 7 - POST Special Pricing Pull API/APIM ITG",
+                url: "https://apim-it.it.hpe.com/api/price-communications/v1/special-pricing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_8",
+                name: "PROD API 8 - POST Standard Pricing Pull & Special Pricing Delta Pull API/Standard Pricing Pull",
+                url: "https://apim-it.it.hpe.com/api/price-communications/pricing/v1/standard-pricing",
+                method: "POST",
+                restrictedParams: []
+            }]
+        };
+
+        // Function to toggle between Manual, Automatic, Security, and Load Execution modes
+        function toggleExecutionMode() {
+            const mode = executionModeSelect.value;
+
+            apiManualFields.style.display = 'none';
+            autoExecutionFields.style.display = 'none';
+            apiSecurityTestingSection.style.display = 'none';
+            staticPageSecurityTestingSection.style.display = 'none'; // NEW
+            apiLoadTestingSection.style.display = 'none';
+
+            if (mode === 'manual') {
+                apiManualFields.style.display = 'block';
+            } else if (mode === 'automatic') {
+                autoExecutionFields.style.display = 'block';
+            } else if (mode === 'api_security') { // Changed value from 'security'
+                apiSecurityTestingSection.style.display = 'block';
+                onSecurityEnvChange(); // Initialize security section dropdowns
+            } else if (mode === 'static_security') { // NEW
+                staticPageSecurityTestingSection.style.display = 'block';
+                // No environment dropdown for static pages, but might need initial setup
+            }
+            else if (mode === 'load') {
+                apiLoadTestingSection.style.display = 'block';
+                onLoadTestEnvChange(); // Initialize load testing section dropdowns
+            }
+        }
+
+        // Function to populate API dropdown based on selected environment (Manual Mode)
+        function onEnvChange() {
+            const selectedEnv = environment.value;
+            populateApiDropdown(apiSelect, API_MAP[selectedEnv]);
+            updateApiDetails(); // Update details for the first API in the list
+            window.electron.ipcRenderer.invoke('set-environment', selectedEnv);
+        }
+
+        // Function to populate API dropdown based on selected environment (Automatic Mode)
+        function onAutoEnvChangeBulk() {
+            const selectedEnv = autoEnvSelect.value;
+            populateApiDropdown(customApiSelect, API_MAP[selectedEnv]);
+            // Clear selected APIs for bulk execution when environment changes
+            selectedBulkApisData = [];
+            renderSelectedApisForBulkExecution();
+            window.electron.ipcRenderer.invoke('set-environment', selectedEnv);
+        }
+
+        // Function to populate API dropdown based on selected environment (General helper)
+        function populateApiDropdown(dropdownElement, apis) {
+            dropdownElement.innerHTML = '<option value="">-- Select --</option>';
+            if (apis) {
+                apis.forEach(api => {
+                    const option = document.createElement('option');
+                    option.value = api.id;
+                    option.textContent = api.name;
+                    dropdownElement.appendChild(option);
+                });
+            }
+        }
+
+        // Updates URL and Payload fields for Manual mode based on selected API
+        function updateApiDetails() {
+            const selectedApiId = apiSelect.value;
+            const selectedEnv = environment.value;
+            const selectedApi = API_MAP[selectedEnv] ? API_MAP[selectedEnv].find(api => api.id === selectedApiId) : null;
+
+            if (selectedApi) {
+                apiUrlInput.value = selectedApi.url;
+                apiMethodSelect.value = selectedApi.method;
+                payloadInputManual.value = selectedApi.method === 'POST' ? '{\n  "param1": "value1",\n  "param2": "value2"\n}' : '';
+            } else {
+                apiUrlInput.value = '';
+                apiMethodSelect.value = 'GET';
+                payloadInputManual.value = '';
+            }
+            togglePayloadDisplay();
+        }
+
+        function togglePayloadDisplay() {
+            const method = apiMethodSelect.value;
+            if (method === 'POST') {
+                payloadInputManual.style.display = 'block';
+                requestPayloadDisplayDiv.classList.add('hidden');
+            } else {
+                payloadInputManual.style.display = 'none';
+                requestPayloadDisplayDiv.classList.remove('hidden');
+            }
+        }
+
+        async function executeApi() {
+            const url = apiUrlInput.value;
+            const method = apiMethodSelect.value;
+            let payload = payloadInputManual.value;
+
+            if (!url) {
+                alert('API URL is required.');
+                return;
+            }
+
+            if (method === 'POST') {
+                try {
+                    payload = payload ? JSON.parse(payload) : {};
+                } catch (e) {
+                    alert('Invalid JSON payload for POST request.');
+                    return;
+                }
+            } else {
+                payload = null; // GET requests don't have a body payload
+            }
+
+            requestPayloadMethodSpan.textContent = method;
+            requestPayloadContentPre.textContent = method === 'GET' ? url : JSON.stringify(payload, null, 2);
+            requestPayloadDisplayDiv.classList.remove('hidden');
+
+            const tokenStatusElement = document.getElementById('tokenStatus');
+            if (tokenStatusElement && !tokenStatusElement.classList.contains('acquired')) {
+                alert('Access token not acquired. Please get an access token first.');
+                return;
+            }
+
+            responseCodeDisplay.textContent = '';
+            responseTimeDisplay.textContent = '';
+            responseBody.textContent = '';
+            errorMessageDiv.style.display = 'none';
+            errorCodeDisplay.textContent = '';
+            errorTimeDisplay.textContent = '';
+            errorPayloadDisplay.textContent = '';
+            corsWarningDiv.style.display = 'none';
+
+            let errorOccurred = false;
+            let latestErrorDetails = null;
+            let corsEncountered = false;
+
+            const startTime = Date.now();
+            try {
+                const response = await window.electron.ipcRenderer.invoke('execute-api-request', {
+                    url: url,
+                    method: method,
+                    payload: payload,
+                    accessToken: window.getAccessTokenValue()
+                });
+
+                const endTime = Date.now(); // Corrected typo
+                const responseTime = endTime - startTime;
+
+                if (response.success) {
+                    responseCodeDisplay.textContent = response.status;
+                    responseTimeDisplay.textContent = `${responseTime}`;
+                    try {
+                        responseBody.textContent = JSON.stringify(JSON.parse(response.data), null, 2);
+                    } catch (e) {
+                        responseBody.textContent = response.data;
+                    }
+                } else {
+                    errorOccurred = true;
+                    errorCodeDisplay.textContent = response.status || 'N/A';
+                    errorTimeDisplay.textContent = `${responseTime}`;
+                    errorPayloadDisplay.textContent = response.error ? JSON.stringify(response.error, null, 2) : response.message;
+                    errorMessageDiv.style.display = 'block';
+
+                    latestErrorDetails = {
+                        url: url,
+                        method: method,
+                        parameters: payload,
+                        errorResponse: response.error || response.message,
+                        statusCode: response.status || 'N/A',
+                        responseTime: responseTime,
+                        environment: window.getCurrentEnvironment ? window.getCurrentEnvironment() : 'N/A'
+                    };
+                    if (response.message && (response.message.includes("Failed to fetch") || response.message.includes("CORS"))) corsEncountered = true;
+                }
+            } catch (error) {
+                errorOccurred = true;
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                errorCodeDisplay.textContent = 'Client Error';
+                errorTimeDisplay.textContent = `${responseTime}`;
+                errorPayloadDisplay.textContent = error.message;
+                errorMessageDiv.style.display = 'block';
+
+                latestErrorDetails = {
+                    url: url,
+                    method: method,
+                    parameters: payload,
+                    errorResponse: error.message,
+                    statusCode: 'Client Error',
+                    responseTime: responseTime,
+                    environment: window.getCurrentEnvironment ? window.getCurrentEnvironment() : 'N/A'
+                };
+                if (error.message.includes("Failed to fetch") || error.message.includes("CORS")) corsEncountered = true;
+            }
+
+            if (window.setLastApiError && errorOccurred) {
+                window.setLastApiError(latestErrorDetails);
+            }
+
+            if (corsEncountered) {
+                corsWarningDiv.style.display = 'block';
+            } else {
+                corsWarningDiv.style.display = 'none';
+            }
+        }
+
+        function addSelectedApisToBulkList() {
+            const selectedApiIds = Array.from(customApiSelect.selectedOptions).map(option => option.value);
+            const selectedEnv = autoEnvSelect.value;
+
+            if (!selectedEnv) {
+                alert('Please select an environment first.');
+                return;
+            }
+            if (selectedApiIds.length === 0) {
+                alert('Please select at least one API to add.');
+                return;
+            }
+
+            selectedApiIds.forEach(apiId => {
+                const api = API_MAP[selectedEnv].find(a => a.id === apiId);
+                if (api && !selectedBulkApisData.some(item => item.id === api.id)) {
+                    selectedBulkApisData.push({
+                        ...api,
+                        originalPayload: api.method === 'POST' ? '{\n  "key": "value"\n}' : '',
+                        currentPayload: api.method === 'POST' ? '{\n  "key": "value"\n}' : ''
+                    });
+                }
+            });
+
+            renderSelectedApisForBulkExecution();
+        }
+
+        function renderSelectedApisForBulkExecution() {
+            selectedApisDisplayContainer.innerHTML = '';
+            if (selectedBulkApisData.length === 0) {
+                noApiSelectedMessage.style.display = 'block';
+            } else {
+                noApiSelectedMessage.style.display = 'none';
+                selectedBulkApisData.forEach(api => {
+                    const apiEntryDiv = document.createElement('div');
+                    apiEntryDiv.classList.add('api-entry-item');
+                    apiEntryDiv.setAttribute('data-api-id', api.id);
+
+                    let payloadInputHtml = '';
+                    if (api.method === 'POST') {
+                        payloadInputHtml = `
+                            <label for="payload-${api.id}">Payload for ${api.name}:</label>
+                            <textarea id="payload-${api.id}" rows="4" onkeyup="updateBulkApiPayload('${api.id}', this.value)">${api.currentPayload}</textarea>
+                        `;
+                    } else if (api.restrictedParams && api.restrictedParams.length > 0) {
+                        const paramInputs = api.restrictedParams.map(param => `
+                            <label for="param-${api.id}-${param}">${param}:</label>
+                            <input type="text" id="param-${api.id}-${param}" value="" onkeyup="updateBulkApiUrlParam('${api.id}', '${param}', this.value)" placeholder="${param}" />
+                        `).join('');
+                        payloadInputHtml = `<div>${paramInputs}</div>`;
+                    }
+
+                    apiEntryDiv.innerHTML = `
+                        <h4>${api.name} (${api.method})</h4>
+                        <p>URL: ${api.url}</p>
+                        ${payloadInputHtml}
+                        <button onclick="removeApiFromBulkList('${api.id}')">Remove</button>
+                    `;
+                    selectedApisDisplayContainer.appendChild(apiEntryDiv);
+                });
+            }
+        }
+
+        function updateBulkApiPayload(apiId, newPayload) {
+            const apiIndex = selectedBulkApisData.findIndex(api => api.id === apiId);
+            if (apiIndex !== -1) {
+                selectedBulkApisData[apiIndex].currentPayload = newPayload;
+            }
+        }
+
+        function updateBulkApiUrlParam(apiId, paramName, paramValue) {
+            const apiIndex = selectedBulkApisData.findIndex(api => api.id === apiId);
+            if (apiIndex !== -1) {
+                let currentApi = selectedBulkApisData[apiIndex];
+                let currentUrl = currentApi.url;
+
+                const regex = new RegExp(`([?&])${paramName}=[^&]*`, 'g');
+                if (currentUrl.match(regex)) {
+                    currentUrl = currentUrl.replace(regex, `$1${paramName}=${paramValue}`);
+                } else {
+                    currentUrl += (currentUrl.includes('?') ? '&' : '?') + `${paramName}=${paramValue}`;
+                }
+                currentApi.url = currentUrl;
+                console.log(`Updated URL for ${apiId}: ${currentApi.url}`);
+            }
+        }
+
+        function removeApiFromBulkList(apiId) {
+            selectedBulkApisData = selectedBulkApisData.filter(api => api.id !== apiId);
+            renderSelectedApisForBulkExecution();
+        }
+
+        async function executeBulkApis() {
+            if (selectedBulkApisData.length === 0) {
+                alert('No APIs selected for bulk execution.');
+                return;
+            }
+
+            const tokenStatusElement = document.getElementById('tokenStatus');
+            if (tokenStatusElement && !tokenStatusElement.classList.contains('acquired')) {
+                alert('Access token not acquired. Please get an access token first.');
+                return;
+            }
+
+            bulkApiResponseDisplay.innerHTML = '';
+            noBulkResponseYet.style.display = 'none';
+            corsWarningDiv.style.display = 'none';
+
+            let allResponsesHtml = '';
+            let errorOccurred = false;
+            let latestErrorDetails = null;
+            let corsEncountered = false;
+
+            for (const api of selectedBulkApisData) {
+                const startTime = Date.now();
+                let responseHtml = `<div class="bulk-api-response-item"><h4>${api.name}</h4>`;
+
+                try {
+                    let payloadToSend = null;
+                    let urlToSend = api.url;
+
+                    if (api.method === 'POST') {
+                        try {
+                            payloadToSend = api.currentPayload ? JSON.parse(api.currentPayload) : {};
+                        } catch (e) {
+                            responseHtml += `<p class="status-error">Error: Invalid JSON payload for POST request for ${api.name}.</p>`;
+                            responseHtml += `<pre class="error-response">${e.message}</pre>`;
+                            errorOccurred = true;
+                            continue;
+                        }
+                    } else if (api.method === 'GET' && api.restrictedParams && api.restrictedParams.length > 0) {
+                        // URL should already be updated by updateBulkApiUrlParam if params are filled
+                    }
+
+                    const response = await window.electron.ipcRenderer.invoke('execute-api-request', {
+                        url: urlToSend,
+                        method: api.method,
+                        payload: payloadToSend,
+                        accessToken: window.getAccessTokenValue()
+                    });
+
+                    const endTime = Date.now();
+                    const responseTime = endTime - startTime;
+
+                    if (response.success) {
+                        responseHtml += `<p class="response-info">Status Code: <span class="status-success">${response.status}</span></p>`;
+                        responseHtml += `<p class="response-info">Response Time: ${responseTime} ms</p>`;
+                        try {
+                            responseHtml += `<pre>${JSON.stringify(JSON.parse(response.data), null, 2)}</pre>`;
+                        } catch (e) {
+                            responseHtml += `<pre>${response.data}</pre>`;
+                        }
+                    } else {
+                        errorOccurred = true;
+                        responseHtml += `<p class="response-info">Status Code: <span class="status-error">${response.status || 'N/A'}</span></p>`;
+                        responseHtml += `<p class="response-info">Response Time: ${responseTime} ms</p>`;
+                        responseHtml += `<pre class="error-response">${response.error ? JSON.stringify(response.error, null, 2) : response.message}</pre>`;
+
+                        latestErrorDetails = {
+                            url: urlToSend,
+                            method: api.method,
+                            parameters: payloadToSend,
+                            errorResponse: response.error || response.message,
+                            statusCode: response.status || 'N/A',
+                            responseTime: responseTime,
+                            environment: window.getCurrentEnvironment ? window.getCurrentEnvironment() : 'N/A'
+                        };
+                        if (response.message && (response.message.includes("Failed to fetch") || response.message.includes("CORS"))) corsEncountered = true;
+                    }
+                } catch (error) {
+                    errorOccurred = true;
+                    const endTime = Date.now();
+                    const responseTime = endTime - startTime;
+                    responseHtml += `<p class="status-error">Client Error: ${error.message}</p>`;
+                    responseHtml += `<p class="response-info">Response Time: ${responseTime} ms</p>`;
+                    responseHtml += `<pre class="error-response">${error.message}</pre>`;
+
+                    latestErrorDetails = {
+                        url: api.url,
+                        method: api.method,
+                        parameters: api.currentPayload,
+                        errorResponse: error.message,
+                        statusCode: 'Client Error',
+                        responseTime: responseTime,
+                        environment: window.getCurrentEnvironment ? window.getCurrentEnvironment() : 'N/A'
+                    };
+                    if (error.message.includes("Failed to fetch") || error.message.includes("CORS")) corsEncountered = true;
+                }
+                responseHtml += `</div>`;
+                allResponsesHtml += responseHtml;
+            }
+
+            bulkApiResponseDisplay.innerHTML = allResponsesHtml;
+
+            if (window.setLastApiError && errorOccurred) {
+                window.setLastApiError(latestErrorDetails);
+            }
+
+            if (corsEncountered) {
+                corsWarningDiv.style.display = 'block';
+            } else {
+                corsWarningDiv.style.display = 'none';
+            }
+        }
+
+        // --- API Security Testing Functions ---
+        function onSecurityEnvChange() {
+            const selectedEnv = securityEnvSelect.value;
+            populateApiDropdown(securityApiSelect, API_MAP[selectedEnv]);
+            updateSecurityApiDetails();
+            window.electron.ipcRenderer.invoke('set-environment', selectedEnv);
+        }
+
+        function updateSecurityApiDetails() {
+            const selectedApiId = securityApiSelect.value;
+            const selectedEnv = securityEnvSelect.value;
+            const selectedApi = API_MAP[selectedEnv] ? API_MAP[selectedEnv].find(api => api.id === selectedApiId) : null;
+
+            if (selectedApi) {
+                securityTestUrlInput.value = selectedApi.url;
+                securityTestPayloadInput.value = selectedApi.method === 'POST' ? selectedApi.currentPayload || '{\n  "key": "value"\n}' : '';
+            } else {
+                securityTestUrlInput.value = '';
+                securityTestPayloadInput.value = '';
+            }
+            downloadApiSecurityReportBtn.style.display = 'none';
+            apiSecurityPdfReportStatusDiv.textContent = '';
+            apiSecurityTestResultsContainer.style.display = 'none'; // Hide professional output
+            apiSecurityTestRawResults.style.display = 'none'; // Hide raw output
+        }
+
+        async function runSecurityTest() {
+            const url = securityTestUrlInput.value;
+            const payload = securityTestPayloadInput.value;
+            const testType = securityTestTypeSelect.value;
+
+            if (!url) {
+                alert('API URL is required for security testing.');
+                return;
+            }
+
+            // Clear previous results and show loading
+            apiSecurityTestResultsContainer.style.display = 'none';
+            apiSecurityTestRawResults.style.display = 'block';
+            apiSecurityTestRawResults.textContent = `Running ${testType} test on ${url}...\nPlease wait, this may take a moment.`;
+            downloadApiSecurityReportBtn.style.display = 'none';
+            apiSecurityPdfReportStatusDiv.textContent = '';
+
+            try {
+                // This is where your Electron main process would perform the actual security scan
+                // The results object should contain a 'vulnerabilities' array
+                const results = await window.electron.ipcRenderer.invoke('run-security-test', {
+                    testType,
+                    url,
+                    payload,
+                    accessToken: window.getAccessTokenValue()
+                });
+
+                apiSecurityTestRawResults.textContent = JSON.stringify(results, null, 2); // Always show raw for debugging
+                renderApiSecurityTestResults(results, url, testType, securityApiSelect.options[securityApiSelect.selectedIndex].text);
+                downloadApiSecurityReportBtn.style.display = 'block';
+
+            } catch (error) {
+                apiSecurityTestRawResults.textContent = `Error running security test: ${error.message}`;
+                downloadApiSecurityReportBtn.style.display = 'none';
+                apiSecurityPdfReportStatusDiv.textContent = 'Error during security test.';
+                apiSecurityPdfReportStatusDiv.style.color = 'red';
+                apiSecurityTestResultsContainer.style.display = 'none'; // Hide professional output on error
+            }
+        }
+
+        function renderApiSecurityTestResults(results, url, testType, apiName) {
+            apiSecurityTestResultsContainer.style.display = 'block';
+            apiSecurityTestSummaryApi.textContent = apiName;
+            apiSecurityTestSummaryType.textContent = testType;
+            apiSecurityTestSummaryUrl.textContent = url;
+            apiSecurityVulnerabilityDetails.innerHTML = ''; // Clear previous details
+            apiSecurityNoVulnerabilities.style.display = 'none';
+
+            if (results.vulnerabilities && results.vulnerabilities.length > 0) {
+                apiSecurityOverallStatus.textContent = 'Vulnerabilities Found';
+                apiSecurityOverallStatus.classList.remove('security-status-ok');
+                apiSecurityOverallStatus.classList.add('security-status-vulnerable');
+                apiSecurityOverallStatus.style.color = 'red';
+
+                results.vulnerabilities.forEach(vuln => {
+                    const vulnDiv = document.createElement('div');
+                    vulnDiv.classList.add('security-vulnerability-detail');
+                    vulnDiv.innerHTML = `
+                        <h4>${vuln.name || 'Unknown Vulnerability'} (Severity: ${vuln.severity || 'Medium'})</h4>
+                        <p><strong>Description:</strong> ${vuln.description || 'N/A'}</p>
+                        <p><strong>Affected Parameter/Location:</strong> ${vuln.affected || 'N/A'}</p>
+                        <p><strong>Proof of Concept (PoC):</strong></p>
+                        <pre>${vuln.poc || 'N/A'}</pre>
+                        <p><strong>Recommendation:</strong> ${vuln.recommendation || 'N/A'}</p>
+                    `;
+                    apiSecurityVulnerabilityDetails.appendChild(vulnDiv);
+                });
+            } else {
+                apiSecurityOverallStatus.textContent = 'No Vulnerabilities Found';
+                apiSecurityOverallStatus.classList.remove('security-status-vulnerable');
+                apiSecurityOverallStatus.classList.add('security-status-ok');
+                apiSecurityOverallStatus.style.color = 'green';
+                apiSecurityNoVulnerabilities.style.display = 'block';
+            }
+        }
+
+        // --- NEW: Static Page Security Testing Functions ---
+        async function runStaticPageSecurityTest() {
+            const url = staticPageUrlInput.value;
+
+            if (!url) {
+                alert('Static Page URL is required for security testing.');
+                return;
+            }
+
+            // Clear previous results and show loading
+            staticPageSecurityTestResultsContainer.style.display = 'none';
+            staticPageSecurityRawResults.style.display = 'block';
+            staticPageSecurityRawResults.textContent = `Running static page security test on ${url}...\nPlease wait, this may take a moment.`;
+            downloadStaticSecurityReportBtn.style.display = 'none';
+            staticSecurityPdfReportStatusDiv.textContent = '';
+
+            try {
+                // This is where your Electron main process would fetch the HTML and perform analysis
+                // The results object should contain a 'vulnerabilities' array
+                const results = await window.electron.ipcRenderer.invoke('run-static-page-security-test', {
+                    url: url
+                });
+
+                staticPageSecurityRawResults.textContent = JSON.stringify(results, null, 2); // Always show raw for debugging
+                renderStaticPageSecurityTestResults(results, url);
+                downloadStaticSecurityReportBtn.style.display = 'block';
+
+            } catch (error) {
+                staticPageSecurityRawResults.textContent = `Error running static page security test: ${error.message}`;
+                downloadStaticSecurityReportBtn.style.display = 'none';
+                staticSecurityPdfReportStatusDiv.textContent = 'Error during static page security test.';
+                staticSecurityPdfReportStatusDiv.style.color = 'red';
+                staticPageSecurityTestResultsContainer.style.display = 'none'; // Hide professional output on error
+            }
+        }
+
+        function renderStaticPageSecurityTestResults(results, url) {
+            staticPageSecurityTestResultsContainer.style.display = 'block';
+            staticPageSecurityTestSummaryUrlDisplay.textContent = url;
+            staticPageTestSummaryUrl.textContent = url;
+            staticPageVulnerabilityDetails.innerHTML = ''; // Clear previous details
+            staticPageNoVulnerabilities.style.display = 'none';
+
+            if (results.vulnerabilities && results.vulnerabilities.length > 0) {
+                staticPageOverallStatus.textContent = 'Vulnerabilities Found';
+                staticPageOverallStatus.classList.remove('security-status-ok');
+                staticPageOverallStatus.classList.add('security-status-vulnerable');
+                staticPageOverallStatus.style.color = 'red';
+
+                results.vulnerabilities.forEach(vuln => {
+                    const vulnDiv = document.createElement('div');
+                    vulnDiv.classList.add('security-vulnerability-detail');
+                    vulnDiv.innerHTML = `
+                        <h4>${vuln.name || 'Unknown Vulnerability'} (Severity: ${vuln.severity || 'Medium'})</h4>
+                        <p><strong>Description:</strong> ${vuln.description || 'N/A'}</p>
+                        <p><strong>Affected Location/File:</strong> ${vuln.affected || 'N/A'}</p>
+                        <p><strong>Details/Proof:</strong></p>
+                        <pre>${vuln.details || 'N/A'}</pre>
+                        <p><strong>Recommendation:</strong> ${vuln.recommendation || 'N/A'}</p>
+                    `;
+                    staticPageVulnerabilityDetails.appendChild(vulnDiv);
+                });
+            } else {
+                staticPageOverallStatus.textContent = 'No Vulnerabilities Found';
+                staticPageOverallStatus.classList.remove('security-status-vulnerable');
+                staticPageOverallStatus.classList.add('security-status-ok');
+                staticPageOverallStatus.style.color = 'green';
+                staticPageNoVulnerabilities.style.display = 'block';
+            }
+        }
+
+        // --- Load Testing Functions ---
+        function onLoadTestEnvChange() {
+            const selectedEnv = loadTestEnvSelect.value;
+            populateApiDropdown(loadTestApiSelect, API_MAP[selectedEnv]);
+            // Clear selected APIs for load testing when environment changes
+            selectedLoadTestApisData = [];
+            renderSelectedApisForLoadExecution();
+            window.electron.ipcRenderer.invoke('set-environment', selectedEnv);
+        }
+        
+        // NEW: Add selected APIs to load test list
+        function addSelectedApisToLoadTestList() {
+            const selectedApiIds = Array.from(loadTestApiSelect.selectedOptions).map(option => option.value);
+            const selectedEnv = loadTestEnvSelect.value;
+
+            if (!selectedEnv) {
+                alert('Please select an environment first.');
+                return;
+            }
+            if (selectedApiIds.length === 0) {
+                alert('Please select at least one API to add for load testing.');
+                return;
+            }
+
+            selectedApiIds.forEach(apiId => {
+                const api = API_MAP[selectedEnv].find(a => a.id === apiId);
+                if (api && !selectedLoadTestApisData.some(item => item.id === api.id)) {
+                    selectedLoadTestApisData.push({
+                        ...api,
+                        initialUrl: api.url, // Store original URL
+                        currentUrl: api.url, // Current URL, can be modified by params
+                        originalPayload: api.method === 'POST' ? '{\n  "key": "value"\n}' : '',
+                        currentPayload: api.method === 'POST' ? '{\n  "key": "value"\n}' : ''
+                    });
+                }
+            });
+            renderSelectedApisForLoadExecution();
+        }
+
+        // NEW: Render selected APIs for load execution
+        function renderSelectedApisForLoadExecution() {
+            selectedLoadApisDisplayContainer.innerHTML = '';
+            if (selectedLoadTestApisData.length === 0) {
+                noLoadApiSelectedMessage.style.display = 'block';
+            } else {
+                noLoadApiSelectedMessage.style.display = 'none';
+                selectedLoadTestApisData.forEach(api => {
+                    const apiEntryDiv = document.createElement('div');
+                    apiEntryDiv.classList.add('api-entry-item');
+                    apiEntryDiv.setAttribute('data-api-id', api.id);
+
+                    let payloadInputHtml = '';
+                    if (api.method === 'POST') {
+                        payloadInputHtml = `
+                            <label for="load-payload-${api.id}">Payload for ${api.name}:</label>
+                            <textarea id="load-payload-${api.id}" rows="4" onkeyup="updateLoadTestApiPayload('${api.id}', this.value)">${api.currentPayload}</textarea>
+                        `;
+                    } else if (api.restrictedParams && api.restrictedParams.length > 0) {
+                         const paramInputs = api.restrictedParams.map(param => `
+                            <label for="load-param-${api.id}-${param}">${param}:</label>
+                            <input type="text" id="load-param-${api.id}-${param}" value="${new URLSearchParams(api.currentUrl.split('?')[1]).get(param) || ''}" onkeyup="updateLoadTestUrlParam('${api.id}', '${param}', this.value)" placeholder="${param}" />
+                        `).join('');
+                        payloadInputHtml = `<div>${paramInputs}</div>`;
+                    }
+
+                    apiEntryDiv.innerHTML = `
+                        <h4>${api.name} (${api.method})</h4>
+                        <p>Original URL: ${api.initialUrl}</p>
+                        <p>Current URL: <span id="load-api-current-url-${api.id}">${api.currentUrl}</span></p>
+                        ${payloadInputHtml}
+                        <button onclick="removeApiFromLoadList('${api.id}')">Remove</button>
+                    `;
+                    selectedLoadApisDisplayContainer.appendChild(apiEntryDiv);
+                });
+            }
+        }
+
+        // NEW: Update payload for specific API in load test list
+        function updateLoadTestApiPayload(apiId, newPayload) {
+            const apiIndex = selectedLoadTestApisData.findIndex(api => api.id === apiId);
+            if (apiIndex !== -1) {
+                selectedLoadTestApisData[apiIndex].currentPayload = newPayload;
+            }
+        }
+
+        // NEW: Update URL parameter for specific API in load test list
+        function updateLoadTestUrlParam(apiId, paramName, paramValue) {
+            const apiIndex = selectedLoadTestApisData.findIndex(api => api.id === apiId);
+            if (apiIndex !== -1) {
+                let currentApi = selectedLoadTestApisData[apiIndex];
+                let currentUrl = currentApi.initialUrl; // Start with the initial URL
+
+                // Update the parameter in the URL
+                const urlObj = new URL(currentUrl);
+                urlObj.searchParams.set(paramName, paramValue);
+                currentApi.currentUrl = urlObj.toString();
+                
+                // Update the displayed URL
+                document.getElementById(`load-api-current-url-${apiId}`).textContent = currentApi.currentUrl;
+                console.log(`Updated URL for ${apiId}: ${currentApi.currentUrl}`);
+            }
+        }
+
+        // NEW: Remove API from load test list
+        function removeApiFromLoadList(apiId) {
+            selectedLoadTestApisData = selectedLoadTestApisData.filter(api => api.id !== apiId);
+            renderSelectedApisForLoadExecution();
+        }
+
+
+        async function runLoadTest() {
+            const requests = parseInt(loadTestRequestsInput.value, 10);
+            const concurrency = parseInt(loadTestConcurrencyInput.value, 10);
+
+            if (selectedLoadTestApisData.length === 0) {
+                alert('No APIs selected for load testing. Please add some APIs.');
+                return;
+            }
+
+            if (isNaN(requests) || requests <= 0 || isNaN(concurrency) || concurrency <= 0) {
+                alert('Please provide valid numbers for requests and concurrency.');
+                return;
+            }
+
+            loadTestResultsDiv.innerHTML = `Starting load tests for ${selectedLoadTestApisData.length} APIs with ${requests} requests and ${concurrency} concurrency per API...\n`;
+            downloadLoadReportBtn.style.display = 'none';
+            loadPdfReportStatusDiv.textContent = '';
+
+            let allTestResultsHtml = '';
+            for (const api of selectedLoadTestApisData) {
+                loadTestResultsDiv.innerHTML += `<p>Running load test for: <strong>${api.name}</strong>...</p>`;
+                
+                let payloadToSend = null;
+                if (api.method === 'POST') {
+                    try {
+                        payloadToSend = api.currentPayload ? JSON.parse(api.currentPayload) : {};
+                    } catch (e) {
+                        allTestResultsHtml += `<div class="load-test-summary">
+                            <h3>Load Test Summary for ${api.name} (Error)</h3>
+                            <p class="load-test-errors">Error: Invalid JSON payload: ${e.message}</p>
+                        </div>`;
+                        continue; // Skip this API if payload is invalid
+                    }
+                }
+
+                try {
+                    const results = await window.electron.ipcRenderer.invoke('run-load-test', {
+                        url: api.currentUrl,
+                        requests,
+                        concurrency,
+                        payload: payloadToSend,
+                        accessToken: window.getAccessTokenValue()
+                    });
+
+                    const totalTimeSeconds = results.totalTime / 1000;
+                    const tps = totalTimeSeconds > 0 ? (results.successfulRequests / totalTimeSeconds).toFixed(2) : 0;
+                    const avgResponseTimeMs = results.avgResponseTime.toFixed(2);
+                    const minResponseTimeMs = results.minResponseTime.toFixed(2);
+                    const maxResponseTimeMs = results.maxResponseTime.toFixed(2);
+
+                    let apiResultsHtml = `
+                        <div class="load-test-summary">
+                            <h3>Load Test Summary for ${api.name}</h3>
+                            <table>
+                                <tr>
+                                    <td class="metric-label">Target URL:</td>
+                                    <td class="metric-value">${results.url}</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">HTTP Method:</td>
+                                    <td class="metric-value">${api.method}</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Total Requests:</td>
+                                    <td class="metric-value">${results.totalRequests}</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Concurrency:</td>
+                                    <td class="metric-value">${results.concurrency}</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Successful Requests:</td>
+                                    <td class="metric-value">${results.successfulRequests}</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Failed Requests:</td>
+                                    <td class="metric-value">${results.failedRequests}</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Total Duration:</td>
+                                    <td class="metric-value">${totalTimeSeconds.toFixed(2)} seconds</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Min Response Time:</td>
+                                    <td class="metric-value">${minResponseTimeMs} ms</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Max Response Time:</td>
+                                    <td class="metric-value">${maxResponseTimeMs} ms</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Average Response Time:</td>
+                                    <td class="metric-value">${avgResponseTimeMs} ms</td>
+                                </tr>
+                                <tr>
+                                    <td class="metric-label">Transactions Per Second (TPS):</td>
+                                    <td class="metric-value">${tps}</td>
+                                </tr>
+                            </table>
+                    `;
+
+                    if (results.errors && results.errors.length > 0) {
+                        apiResultsHtml += `
+                            <div class="load-test-errors">
+                                <h4>Errors (${results.errors.length}):</h4>
+                                <ul>
+                                    ${results.errors.map(error => `<li>[Status: ${error.status}, Time: ${error.responseTime}ms] ${error.message}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    apiResultsHtml += `</div><br>`; // Add a break for separation
+                    allTestResultsHtml += apiResultsHtml;
+
+                } catch (error) {
+                    allTestResultsHtml += `
+                        <div class="load-test-summary">
+                            <h3>Load Test Summary for ${api.name} (Error)</h3>
+                            <p class="load-test-errors">Error running load test for ${api.name}: <pre>${error.message}</pre></p>
+                        </div><br>`;
+                }
+            }
+            loadTestResultsDiv.innerHTML = allTestResultsHtml;
+            if (selectedLoadTestApisData.length > 0) {
+                 downloadLoadReportBtn.style.display = 'block';
+            }
+        }
+
+        // --- PDF Report Generation for API Security Test ---
+        async function generateAndDownloadApiSecurityPdf() {
+            apiSecurityPdfReportStatusDiv.textContent = 'Generating PDF report...';
+            apiSecurityPdfReportStatusDiv.style.color = 'blue';
+
+            // Capture the content from the professional display container
+            const apiSecurityTestOutputHtml = apiSecurityTestResultsContainer.innerHTML;
+            const reportContent = `
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 15px; }
+                    .section-content { background-color:#f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                    .security-test-summary {
+                        background-color: #f8f8f8;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-top: 15px;
+                    }
+                    .security-test-summary table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }
+                    .security-test-summary th,
+                    .security-test-summary td {
+                        border: 1px solid #d0d0d0;
+                        padding: 8px 12px;
+                        text-align: left;
+                    }
+                    .security-test-summary th {
+                        background-color: #e9e9e9;
+                        font-weight: bold;
+                        color: #333;
+                    }
+                    .security-test-summary td {
+                        background-color: #ffffff;
+                        color: #555;
+                    }
+                    .security-test-summary .metric-label {
+                        font-weight: 600;
+                        color: #007bff;
+                    }
+                    .security-test-summary .metric-value {
+                        font-family: 'Consolas', 'Courier New', monospace;
+                        color: #333;
+                    }
+                    .security-vulnerability-detail {
+                        background-color: #ffffff;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 6px;
+                        padding: 15px;
+                        margin-top: 10px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    }
+                    .security-vulnerability-detail h4 {
+                        margin-top: 0;
+                        color: #333;
+                        font-size: 1.1em;
+                        border-bottom: 1px dashed #eee;
+                        padding-bottom: 5px;
+                        margin-bottom: 10px;
+                    }
+                    .security-vulnerability-detail p {
+                        margin-bottom: 5px;
+                        line-height: 1.4;
+                    }
+                    .security-vulnerability-detail strong {
+                        color: #007bff;
+                    }
+                    .security-vulnerability-detail pre {
+                        background-color: #eef;
+                        border: 1px solid #dde;
+                        margin-top: 5px;
+                        padding: 8px;
+                        border-radius: 3px;
+                        overflow-x: auto;
+                    }
+                    .security-status-ok {
+                        background-color: #d4edda;
+                        border-color: #c3e6cb;
+                        color: #155724;
+                        padding: 10px;
+                        border-radius: 4px;
+                        margin-top: 10px;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                    .security-status-vulnerable {
+                        background-color: #f8d7da;
+                        border-color: #f5c6cb;
+                        color: #721c24;
+                        padding: 10px;
+                        border-radius: 4px;
+                        margin-top: 10px;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                </style>
+                <h1>API Security Test Report</h1>
+                <div class="section-content">
+                    ${apiSecurityTestOutputHtml}
+                </div>
+            `;
+
+            try {
+                const result = await window.electron.ipcRenderer.invoke('generate-pdf-report', reportContent);
+                if (result.success) {
+                    apiSecurityPdfReportStatusDiv.textContent = `PDF report generated and saved to: ${result.filePath}`;
+                    apiSecurityPdfReportStatusDiv.style.color = 'green';
+                } else {
+                    apiSecurityPdfReportStatusDiv.textContent = `Failed to generate PDF report: ${result.error}`;
+                    apiSecurityPdfReportStatusDiv.style.color = 'red';
+                }
+            } catch (error) {
+                apiSecurityPdfReportStatusDiv.textContent = `Error generating PDF report: ${error.message}`;
+                apiSecurityPdfReportStatusDiv.style.color = 'red';
+            }
+        }
+
+
+        // --- PDF Report Generation for Static Security Test (NEW) ---
+        async function generateAndDownloadStaticSecurityPdf() {
+            staticSecurityPdfReportStatusDiv.textContent = 'Generating PDF report...';
+            staticSecurityPdfReportStatusDiv.style.color = 'blue';
+
+            // Capture the content from the professional display container
+            const staticSecurityTestOutputHtml = staticPageSecurityTestResultsContainer.innerHTML;
+            const reportContent = `
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 15px; }
+                    .section-content { background-color:#f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+                    .security-test-summary {
+                        background-color: #f8f8f8;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-top: 15px;
+                    }
+                    .security-test-summary table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }
+                    .security-test-summary th,
+                    .security-test-summary td {
+                        border: 1px solid #d0d0d0;
+                        padding: 8px 12px;
+                        text-align: left;
+                    }
+                    .security-test-summary th {
+                        background-color: #e9e9e9;
+                        font-weight: bold;
+                        color: #333;
+                    }
+                    .security-test-summary td {
+                        background-color: #ffffff;
+                        color: #555;
+                    }
+                    .security-test-summary .metric-label {
+                        font-weight: 600;
+                        color: #007bff;
+                    }
+                    .security-test-summary .metric-value {
+                        font-family: 'Consolas', 'Courier New', monospace;
+                        color: #333;
+                    }
+                    .security-vulnerability-detail {
+                        background-color: #ffffff;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 6px;
+                        padding: 15px;
+                        margin-top: 10px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                    }
+                    .security-vulnerability-detail h4 {
+                        margin-top: 0;
+                        color: #333;
+                        font-size: 1.1em;
+                        border-bottom: 1px dashed #eee;
+                        padding-bottom: 5px;
+                        margin-bottom: 10px;
+                    }
+                    .security-vulnerability-detail p {
+                        margin-bottom: 5px;
+                        line-height: 1.4;
+                    }
+                    .security-vulnerability-detail strong {
+                        color: #007bff;
+                    }
+                    .security-vulnerability-detail pre {
+                        background-color: #eef;
+                        border: 1px solid #dde;
+                        margin-top: 5px;
+                        padding: 8px;
+                        border-radius: 3px;
+                        overflow-x: auto;
+                    }
+                    .security-status-ok {
+                        background-color: #d4edda;
+                        border-color: #c3e6cb;
+                        color: #155724;
+                        padding: 10px;
+                        border-radius: 4px;
+                        margin-top: 10px;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                    .security-status-vulnerable {
+                        background-color: #f8d7da;
+                        border-color: #f5c6cb;
+                        color: #721c24;
+                        padding: 10px;
+                        border-radius: 4px;
+                        margin-top: 10px;
+                        font-weight: bold;
+                        text-align: center;
+                    }
+                </style>
+                <h1>Static Page Security Test Report</h1>
+                <div class="section-content">
+                    ${staticSecurityTestOutputHtml}
+                </div>
+            `;
+
+            try {
+                const result = await window.electron.ipcRenderer.invoke('generate-pdf-report', reportContent);
+                if (result.success) {
+                    staticSecurityPdfReportStatusDiv.textContent = `PDF report generated and saved to: ${result.filePath}`;
+                    staticSecurityPdfReportStatusDiv.style.color = 'green';
+                } else {
+                    staticSecurityPdfReportStatusDiv.textContent = `Failed to generate PDF report: ${result.error}`;
+                    staticSecurityPdfReportStatusDiv.style.color = 'red';
+                }
+            } catch (error) {
+                staticSecurityPdfReportStatusDiv.textContent = `Error generating PDF report: ${error.message}`;
+                staticSecurityPdfReportStatusDiv.style.color = 'red';
+            }
+        }
+
+
+        // --- PDF Report Generation for Load Test ---
+        async function generateAndDownloadLoadPdf() {
+            loadPdfReportStatusDiv.textContent = 'Generating PDF report...';
+            loadPdfReportStatusDiv.style.color = 'blue';
+
+            // Capture the entire formatted HTML from the loadTestResultsDiv
+            const loadTestOutputHtml = loadTestResultsDiv.innerHTML;
+            const reportContent = `
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h1 { color: #333; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 15px; }
+                    .load-test-summary {
+                        background-color: #f8f8f8;
+                        border: 1px solid #e0e0e0;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin-top: 15px;
+                    }
+                    .load-test-summary table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 10px;
+                    }
+                    .load-test-summary th,
+                    .load-test-summary td {
+                        border: 1px solid #d0d0d0;
+                        padding: 8px 12px;
+                        text-align: left;
+                    }
+                    .load-test-summary th {
+                        background-color: #e9e9e9;
+                        font-weight: bold;
+                        color: #333;
+                    }
+                    .load-test-summary td {
+                        background-color: #ffffff;
+                        color: #555;
+                    }
+                    .load-test-summary .metric-label {
+                        font-weight: 600;
+                        color: #007bff;
+                    }
+                    .load-test-summary .metric-value {
+                        font-family: 'Consolas', 'Courier New', monospace;
+                        color: #333;
+                    }
+                    .load-test-errors {
+                        margin-top: 20px;
+                        padding: 10px;
+                        background-color: #fceceb;
+                        border: 1px solid #f5c6cb;
+                        border-radius: 5px;
+                        color: #721c24;
+                    }
+                    .load-test-errors ul {
+                        list-style-type: none;
+                        padding: 0;
+                        margin: 0;
+                    }
+                    .load-test-errors li {
+                        margin-bottom: 5px;
+                        font-family: 'Consolas', 'Courier New', monospace;
+                    }
+                </style>
+                <h1>API Load Test Report</h1>
+                <div class="section-content">
+                    ${loadTestOutputHtml}
+                </div>
+            `;
+
+            try {
+                const result = await window.electron.ipcRenderer.invoke('generate-pdf-report', reportContent);
+                if (result.success) {
+                    loadPdfReportStatusDiv.textContent = `PDF report generated and saved to: ${result.filePath}`;
+                    loadPdfReportStatusDiv.style.color = 'green';
+                } else {
+                    loadPdfReportStatusDiv.textContent = `Failed to generate PDF report: ${result.error}`;
+                    loadPdfReportStatusDiv.style.color = 'red';
+                }
+            } catch (error) {
+                loadPdfReportStatusDiv.textContent = `Error generating PDF report: ${error.message}`;
+                loadPdfReportStatusDiv.style.color = 'red';
+            }
+        }
+
+
+        // Call toggleExecutionMode on DOMContentLoaded to set initial display state
+        document.addEventListener('DOMContentLoaded', async () => {
+            toggleExecutionMode(); // Set initial mode based on default selection
+
+            // Also fetch the initial environment to set up the API lists correctly
+            const initialEnvironment = await window.electron.ipcRenderer.invoke('get-environment');
+            if (initialEnvironment) {
+                environment.value = initialEnvironment; // For manual mode dropdown
+                autoEnvSelect.value = initialEnvironment; // For auto mode dropdown
+                securityEnvSelect.value = initialEnvironment; // For security mode dropdown
+                loadTestEnvSelect.value = initialEnvironment; // For load mode dropdown
+
+                // Call appropriate functions to populate APIs based on the initial mode
+                // This will be handled by toggleExecutionMode if it sets the default.
+                // Otherwise, you might need to call specific onEnvChange functions here
+                // if the default mode is not 'manual'.
+                if (executionModeSelect.value === 'manual') {
+                    onEnvChange();
+                } else if (executionModeSelect.value === 'automatic') {
+                    onAutoEnvChangeBulk();
+                } else if (executionModeSelect.value === 'api_security') { // Changed value
+                    onSecurityEnvChange();
+                } else if (executionModeSelect.value === 'static_security') { // NEW
+                    // No specific environment change needed for static
+                }
+                else if (executionModeSelect.value === 'load') {
+                    onLoadTestEnvChange();
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
