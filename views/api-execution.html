@@ -404,13 +404,13 @@
         <select id="securityTestType">
             <option value="xss">Cross-Site Scripting (XSS)</option>
             <option value="sql_injection">SQL Injection</option>
-            <option value="broken_auth">Broken Authentication (Placeholder)</option>
-            <option value="insecure_direct_object_ref">Insecure Direct Object Reference (IDOR) (Placeholder)</option>
+            <option value="broken_auth">Broken Authentication</option>
+            <option value="insecure_direct_object_ref">Insecure Direct Object Reference (IDOR)</option>
         </select>
         <label for="securityTestUrl">API URL for Security Test:</label>
         <input type="text" id="securityTestUrl" placeholder="Enter API URL for security testing" />
         <label for="securityTestPayload">Payload (if applicable):</label>
-        <textarea id="securityTestPayload" rows="3" placeholder='{"key": "<script>alert(\"XSS\")</script>"}'></textarea>
+        <textarea id="securityTestPayload" rows="3" placeholder='{"key": "value"}'></textarea>
         <button onclick="runSecurityTest()">Run Security Test</button>
         <h3>Security Test Results</h3>
         <div id="apiSecurityTestResultsContainer" class="security-test-summary" style="display:none;">
@@ -595,10 +595,104 @@
         // API_MAP is now defined directly in api-execution.html
         const API_MAP = {
             uat: [{
-               
+                id: "uat_api_1",
+                name: "UAT API 1 - GET APIM- QuoteDetails/QuoteDetails",
+                url: "https://apim-itg.it.hpe.com/api/dqm/quote/v1/quotes/procurement?quote-no=",
+                method: "GET",
+                restrictedParams: ["quote-no"]
+            }, {
+                id: "uat_api_2",
+                name: "UAT API 2 - POST APIM-ServiceQuote and Contract NonProd/Renewal Quote Req",
+                url: "https://apim-itg.it.hpe.com/api/services/quotes/v1/renewal-quote",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_3",
+                name: "UAT API 3 - POST ASN-Pull API/Advance Shipment Notice",
+                url: "https://apim-itg.it.hpe.com/api/order-management/shipment/v1/deliveryStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_4",
+                name: "UAT API 4 - POST Billing-Pull API/Billing",
+                url: "https://apim-itg.it.hpe.com/api/order-management/billing/v1/billingStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_5",
+                name: "UAT API 5 - POST Flex-Solution Billing Hybrid API/Flex-Solution Billing API",
+                url: "https://apim-itg.it.hpe.com/api/services/billing/v1/flex-billing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_6",
+                name: "UAT API 6 - POST OrderStatus-Pull API/Orderstatus",
+                url: "https://apim-itg.it.hpe.com/api/order-management/order/v1/orderStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_7",
+                name: "UAT API 7 - POST Special Pricing Pull API/APIM ITG",
+                url: "https://apim-itg.it.hpe.com/api/price-communications/v1/special-pricing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "uat_api_8",
+                name: "UAT API 8 - POST Standard Pricing Pull & Special Pricing Delta Pull API/Standard Pricing Pull",
+                url: "https://apim-itg.it.hpe.com/api/price-communications/pricing/v1/standard-pricing",
+                method: "POST",
+                restrictedParams: []
             }],
             prod: [{
-                      };
+                id: "prod_api_1",
+                name: "PROD API 1 - GET APIM- QuoteDetails/QuoteDetails",
+                url: "https://apim.it.hpe.com/api/dqm/quote/v1/quotes/procurement?quote-no=",
+                method: "GET",
+                restrictedParams: ["quote-no"]
+            }, {
+                id: "prod_api_2",
+                name: "PROD API 2 - POST APIM-ServiceQuote and Contract NonProd/Renewal Quote Req",
+                url: "https://apim.it.hpe.com/api/services/quotes/v1/renewal-quote",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_3",
+                name: "PROD API 3 - POST ASN-Pull API/Advance Shipment Notice",
+                url: "https://apim.it.hpe.com/api/order-management/shipment/v1/deliveryStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_4",
+                name: "PROD API 4 - POST Billing-Pull API/Billing",
+                url: "https://apim.it.hpe.com/api/order-management/billing/v1/billingStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_5",
+                name: "PROD API 5 - POST Flex-Solution Billing Hybrid API/Flex-Solution Billing API",
+                url: "https://apim.it.hpe.com/api/services/billing/v1/flex-billing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_6",
+                name: "PROD API 6 - POST OrderStatus-Pull API/Orderstatus",
+                url: "https://apim.it.hpe.com/api/order-management/order/v1/orderStatus",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_7",
+                name: "PROD API 7 - POST Special Pricing Pull API/APIM ITG",
+                url: "https://apim-it.it.hpe.com/api/price-communications/v1/special-pricing",
+                method: "POST",
+                restrictedParams: []
+            }, {
+                id: "prod_api_8",
+                name: "PROD API 8 - POST Standard Pricing Pull & Special Pricing Delta Pull API/Standard Pricing Pull",
+                url: "https://apim-it.it.hpe.com/api/price-communications/pricing/v1/standard-pricing",
+                method: "POST",
+                restrictedParams: []
+            }]
+        };
 
         // Function to toggle between Manual, Automatic, Security, and Load Execution modes
         function toggleExecutionMode() {
